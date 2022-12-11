@@ -5,7 +5,7 @@ from utils.response import APIResponse
 from apps.account.serializers import *
 from django.utils import timezone
 import datetime
-from apps.account.models import UserInfo
+from apps.account.models import UserToken
 
 
 class UserManager(APIView):
