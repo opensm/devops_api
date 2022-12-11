@@ -65,7 +65,7 @@ class UserToken(models.Model):
         to='UserInfo', on_delete=models.DO_NOTHING,
         verbose_name="用户", default=0
     )
-    token = models.CharField(max_length=60)
+    token = models.CharField(max_length=60, blank=True)
     update_date = models.DateTimeField(verbose_name='更新日期', default=0)
     expiration_time = models.DateTimeField(verbose_name='失效时间', default=0)
 

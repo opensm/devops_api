@@ -36,7 +36,7 @@ class KubernetesWorkLoadServiceIngressTemplate(models.Model):
         db_table = 't_kubernetes_template'
 
 
-class DBs(models.Model):
+class DB(models.Model):
     db_type = models.CharField(
         verbose_name="所属数据库类型",
         choices=(
@@ -51,6 +51,9 @@ class DBs(models.Model):
     password = models.CharField(verbose_name="密码", max_length=200, default="admin", blank=True)
     uri = models.CharField(verbose_name="uri连接地址", max_length=200, default="mongo://127.0.0.1:27017")
     desc = models.TextField(verbose_name="备注")
+
+    class Meta:
+        db_table = 't_db'
 
 
 class Orders(models.Model):

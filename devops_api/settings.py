@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-j3y1w*--r&+3bjstq#w)fbx9o7_jmewtg5nf5zodo-q0ed1+kz'
+SALT_KEY = "11111111111111111"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -35,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.auth',
+    'apps.account',
     'apps.order'
 ]
 
@@ -53,7 +54,7 @@ ROOT_URLCONF = 'devops_api.urls'
 
 TEMPLATES = [
     {
-        # 'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
