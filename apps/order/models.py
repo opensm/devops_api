@@ -66,7 +66,7 @@ class Orders(models.Model):
         verbose_name="kubernetes内容", null=False
     )
     db = models.ForeignKey(
-        verbose_name="所属db", null=False, on_delete=models.CASCADE, to="DBs"
+        verbose_name="所属db", null=False, on_delete=models.CASCADE, to="DB"
     )
     db_content = models.TextField(verbose_name="模板内容", null=False)
     create_time = models.DateTimeField(auto_now_add=True)

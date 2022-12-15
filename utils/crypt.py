@@ -34,10 +34,11 @@ class AesCrypt:
 
     # 解密
     def aesdecrypt(self, text):
-        text = base64.decodebytes(text.encode(self.encode_))
-        self.decrypt_text = self.aes.decrypt(text)
+        
         # 去除解码后的非法字符
         try:
+            text = base64.decodebytes(text.encode(self.encode_))
+            self.decrypt_text = self.aes.decrypt(text)
             result = re.compile('[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f\n\r\t]').sub(
                 '',
                 self.decrypt_text.decode(self.encode_)

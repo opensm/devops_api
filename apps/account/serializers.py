@@ -4,13 +4,13 @@ from rest_framework import serializers
 from utils.crypt import AesCrypt
 from devops_api.settings import SALT_KEY, SECRET_KEY
 from django.contrib import auth
-from apps.account.models import UserInfo, UserToken
+from apps.account.models import User, UserToken
 from django.utils import timezone
 import time
 import hashlib
 
 
-class SignInSerializer(serializers.Serializer, ABC):
+class SignInSerializer(serializers.Serializer):
     username = serializers.CharField(
         allow_blank=False,
         allow_null=False,
@@ -39,20 +39,20 @@ class SignInSerializer(serializers.Serializer, ABC):
         user_obj = auth.authenticate(**attrs)
         if not user_obj:
             raise serializers.ValidationError(detail="登录失败，用户名或者密码错误！{}".format(attrs), code="auth")
-        UserInfo.objects.filter(**attrs).update(last_login=datetime.datetime.now())
+        User.objects.filter(**attrs).update(last_login=datetime.datetime.now())
         return attrs
 
     def validated_username(self, attrs):
         for key, value in attrs.items():
             attrs[key] = self.crypt.decrypt_text(value)
-        if not UserInfo.objects.filter(
+        if not User.objects.filter(
                 username=attrs
         ).exists():
             raise serializers.ValidationError(detail="登录失败，用户不存在！", code="auth")
         return attrs
 
 
-class UserTokenSerializer(serializers.ModelSerializer, ABC):
+class UserTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserToken
         fields = "__all__"
@@ -74,7 +74,7 @@ class UserTokenSerializer(serializers.ModelSerializer, ABC):
         return attrs
 
     def create(self, validated_data):
-        UserToken.objects.filter()
+        UserToken.objects.filter(expiration_time__lte=time.time()).delete()
         obj = UserToken.objects.create(**validated_data)
         return obj
 
