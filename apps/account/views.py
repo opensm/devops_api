@@ -5,7 +5,7 @@ from utils.response import APIResponse
 from apps.account.serializers import *
 from django.utils import timezone
 import datetime
-from apps.account.models import UserToken
+from apps.account.models import UserToken,UserInfo
 
 
 class UserManager(APIView):
@@ -59,12 +59,13 @@ class Login(APIView):
             data = {'username': user.id}
             obj = UserTokenSerializer(data=data)
             if not  obj.is_valid():
-                return APIResponse(
-                data=[],
-                status=200,
-                errcode="00002",
-                errmsg="密钥生成失败！"
-            )
+                raise Exception("密钥生成失败！")
+            #     return APIResponse(
+            #     data=[],
+            #     status=200,
+            #     errcode="00002",
+            #     errmsg="密钥生成失败！"
+            # )
             obj.save()
             return APIResponse(
                 code="00000",

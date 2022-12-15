@@ -80,5 +80,6 @@ class UserTokenSerializer(serializers.ModelSerializer):
 
 
 __all__ = [
-    "SignInSerializer"
+    "SignInSerializer",
+    "UserTokenSerializer"
 ]
