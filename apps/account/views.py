@@ -56,19 +56,20 @@ class Login(APIView):
         # token = make_token(username=data.data['username'])
         try:
             user = UserInfo.objects.get(username=data.data['username'])
-            other = {
-                "username": UserInfo.objects.get(username=data.data['username']),
-                "defaults": {
-                    "token": token,
-                    "expiration_time": expiration_time,
-                    "update_date": datetime.datetime.now(),
-                }
-            }
-            UserToken.objects.update_or_create(**other)
+            data = {'username': user.id}
+            obj = UserTokenSerializer(data=data)
+            if not  obj.is_valid():
+                return APIResponse(
+                data=[],
+                status=200,
+                errcode="00002",
+                errmsg="密钥生成失败！"
+            )
+            obj.save()
             return APIResponse(
                 code="00000",
                 msg="登录成功!",
-                token=token
+                token=obj.token
             )
         except Exception as e:
             return APIResponse(
