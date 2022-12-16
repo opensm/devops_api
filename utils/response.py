@@ -9,9 +9,9 @@ class APIResponse(Response):
     return APIResponse(errcode='101', errmsg='错误',data={"name":'11111111'}, header={})
     """
 
-    def __init__(self, errcode=0, errmsg=None, data=None, status=None, headers=None, **kwargs):
-        dic = {'errcode': errcode, 'errmsg': errmsg}
+    def __init__(self, code=0, message=None, data=None, status=None, headers=None, **kwargs):
+        dic = {'code': code, 'message': message}
         if data:
-            dic = {'errcode': errcode, 'errmsg': errmsg, 'data': data}
+            dic = {'code': code, 'message': message, 'data': data}
         dic.update(kwargs)
         super().__init__(data=dic, status=status, headers=headers)

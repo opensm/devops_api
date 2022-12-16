@@ -58,14 +58,13 @@ class User(AbstractBaseUser):
 
 class UserToken(models.Model):
     id = models.AutoField(primary_key=True)
-    username = models.OneToOneField(
+    username = models.ForeignKey(
         to='User', on_delete=models.DO_NOTHING,
-        verbose_name="用户", default=0
+        verbose_name="用户", default=0,unique=False
     )
-    token = models.CharField(max_length=60, blank=True)
+    token = models.CharField(max_length=60, blank=True, null=True)
     update_date = models.DateTimeField(verbose_name='更新日期', default=0)
     expiration_time = models.DateTimeField(verbose_name='失效时间', default=0)
-    # objects = models.Manager()
 
     class Meta:
         db_table = 'sys_token'

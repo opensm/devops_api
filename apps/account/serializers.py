@@ -5,7 +5,7 @@ from utils.crypt import AesCrypt
 from devops_api.settings import SALT_KEY, SECRET_KEY
 from django.contrib import auth
 from apps.account.models import User, UserToken
-from django.utils import timezone
+from django.utils import timezone as datetime
 import time
 import hashlib
 
@@ -46,7 +46,7 @@ class SignInSerializer(serializers.Serializer):
         user_obj = auth.authenticate(**attrs)
         if not user_obj:
             raise serializers.ValidationError(detail="登录失败，用户名或者密码错误！{}".format(attrs), code="auth")
-        User.objects.filter(**attrs).update(last_login=datetime.datetime.now())
+        User.objects.filter(**attrs).update(last_login=datetime.now())
         return attrs
 
     def validated_username(self, attrs):
@@ -70,18 +70,18 @@ class UserTokenSerializer(serializers.ModelSerializer):
         :return:
         """
         md5 = hashlib.md5(
-            "{0}{1}{2}".format(username, time.time(), SECRET_KEY).encode("utf8")
+            "{0}{1}{2}".format(username, str(time.time()), SECRET_KEY).encode("utf8")
         )
         return md5.hexdigest()
 
     def validate(self, attrs):
         attrs['token'] = self.make_token(username=attrs['username'])
-        attrs['expiration_time'] = timezone.now() + timezone.timedelta(minutes=+60)
-        attrs['update_date'] = datetime.datetime.now()
+        attrs['expiration_time'] = datetime.now() + datetime.timedelta(minutes=+60)
+        attrs['update_date'] = datetime.now()
         return attrs
 
     def create(self, validated_data):
-        UserToken.objects.filter(expiration_time__lte=time.time()).delete()
+        UserToken.objects.filter(expiration_time__lte=datetime.now()).delete()
         obj = UserToken.objects.create(**validated_data)
         return obj
 
