@@ -3,8 +3,6 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import UserManager
 
 
-# Create your models here.
-
 class Role(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='角色', max_length=32, blank=False, null=False, default="default")
@@ -45,10 +43,7 @@ class User(AbstractBaseUser):
     create_date = models.DateTimeField(verbose_name='创建日期', auto_now_add=True, null=True)
     update_date = models.DateTimeField(verbose_name='更新日期', auto_now_add=True, null=True)
     last_login = models.DateTimeField(verbose_name='最近登录', auto_now_add=True, null=True)
-    account_type = models.CharField(
-        verbose_name="账号类型", max_length=20, default="create",
-        choices=(('创建', 'create'), ('ad', 'ad域控'), ('ldap', 'LDAP'))
-    )
+    ldap = models.BooleanField(verbose_name="LDAP", default=True)
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['mobile', 'is_active', 'is_superuser', 'email']
     objects = UserManager()
@@ -75,3 +70,5 @@ class UserToken(models.Model):
     class Meta:
         db_table = 'sys_token'
         verbose_name = verbose_name_plural = '用户token表'
+
+__all__ = ['User','UserToken']

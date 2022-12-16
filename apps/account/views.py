@@ -1,11 +1,8 @@
-from django.shortcuts import render
-# Create your views here.
 from rest_framework.views import APIView
 from utils.response import APIResponse
 from apps.account.serializers import *
 from django.utils import timezone
-import datetime
-from apps.account.models import UserToken,UserInfo
+from apps.account.models import *
 
 
 class UserManager(APIView):
@@ -55,17 +52,11 @@ class Login(APIView):
         expiration_time = timezone.now() + timezone.timedelta(minutes=+60)
         # token = make_token(username=data.data['username'])
         try:
-            user = UserInfo.objects.get(username=data.data['username'])
-            data = {'username': user.id}
+            user = User.objects.get(username=data.data['username'])
+            data = {'username': user.id, 'expiration_time':expiration_time}
             obj = UserTokenSerializer(data=data)
             if not  obj.is_valid():
                 raise Exception("密钥生成失败！")
-            #     return APIResponse(
-            #     data=[],
-            #     status=200,
-            #     errcode="00002",
-            #     errmsg="密钥生成失败！"
-            # )
             obj.save()
             return APIResponse(
                 code="00000",

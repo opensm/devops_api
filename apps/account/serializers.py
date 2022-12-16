@@ -26,6 +26,13 @@ class SignInSerializer(serializers.Serializer):
             "min_length": "密码太短，至少8个字符."
         }
     )
+    ldap = serializers.BooleanField(
+        allow_null=False,
+        default=False,
+        error_messages={
+            "required": "缺少LDAP字段."
+        }
+    )
     crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
 
     def validate(self, attrs):
