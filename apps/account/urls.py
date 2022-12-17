@@ -15,15 +15,13 @@ Including another URLconf
 """
 # from django.contrib import admin
 from django.urls import path
-from apps.account.views import Login
+from apps.account.views import Login,UserManager
 
 
 app_name = 'account'
 
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
-    # path('auth/', include('apps.auth.urls')),
-    # path('order/', include('apps.order.urls'))
-    path('user/login',Login.as_view(),name="login")
+    path('user/login',Login.as_view(),name="login"),
+    path('user/current_user',UserManager.as_view(),name="current_user")
 ]

@@ -59,7 +59,7 @@ class Login(APIView):
             return APIResponse(
                 code=20000,
                 message="登录成功!",
-                token=obj.data['token']
+                data={"token": obj.data['token']}
             )
         except Exception as e:
             return APIResponse(
