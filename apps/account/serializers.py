@@ -59,6 +59,12 @@ class SignInSerializer(serializers.Serializer):
         return attrs
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+
+
 class UserTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserToken
@@ -88,5 +94,6 @@ class UserTokenSerializer(serializers.ModelSerializer):
 
 __all__ = [
     "SignInSerializer",
-    "UserTokenSerializer"
+    "UserTokenSerializer",
+    "UserSerializer"
 ]

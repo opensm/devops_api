@@ -36,19 +36,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders', # 支持跨域
+    'corsheaders',  # 支持跨域
     'rest_framework',
     'apps.account',
     'apps.order'
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', # 支持跨域
-    'django.middleware.common.CommonMiddleware', # 支持跨域
+    'corsheaders.middleware.CorsMiddleware',  # 支持跨域
+    'django.middleware.common.CommonMiddleware',  # 支持跨域
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
