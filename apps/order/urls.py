@@ -14,9 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
+from apps.order.views import *
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
-    # path('auth/', include('apps.auth.urls')),
-    # path('order/', include('apps.order.urls'))
+    path('kubernetes/auth', KubernetesManager.as_view(), name="kubernetes"),
+    path('kubernetes/namespace', KubernetesNameSpaceManager.as_view(), name="namespace"),
+    path('db/auth', DBManager.as_view(), name="db"),
+    path('order/info', OrdersManager.as_view(), name="manager")
 ]

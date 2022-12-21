@@ -15,12 +15,14 @@ Including another URLconf
 """
 # from django.contrib import admin
 from django.urls import path
-from apps.account.views import Login, UserManager, CurrentUser,Logout
+from apps.account.views import Login, UserManager, CurrentUser,Logout,LDAPManager
 
 app_name = 'account'
 
 urlpatterns = [
     path('user/login', Login.as_view(), name="login"),
     path('user/logout', Logout.as_view(), name="logout"),
-    path('user/current', CurrentUser.as_view(), name="current")
+    path('user/current', CurrentUser.as_view(), name="current"),
+    path('user/info', UserManager.as_view(), name="info"),
+    path('user/ldap', LDAPManager.as_view(), name="ldap"),
 ]

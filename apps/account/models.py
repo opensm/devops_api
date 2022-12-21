@@ -55,6 +55,16 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.username
 
+class GlobalLdapConfiguration(models.Model):
+    ldap_server = models.CharField(max_length=30,default="127.0.0.1:389",null=False,verbose_name="地址")
+    ldap_binddn = models.CharField(max_length=80,default="default",null=False,verbose_name="监听账号")
+    ldap_bindpass = models.CharField(max_length=80,default="default",null=False,verbose_name="监听密码")
+    ldap_login_attribute = models.CharField(max_length=50,default="",null=False,verbose_name="登录关键字")
+    ldap_base_dn = models.CharField(max_length=50,default="ou",null=False,verbose_name="登录搜索域")
+    desc =models.TextField(verbose_name="备注")
+    class Meta:
+        db_table = 'sys_ldap'
+
 
 class UserToken(models.Model):
     id = models.AutoField(primary_key=True)
@@ -70,4 +80,4 @@ class UserToken(models.Model):
         db_table = 'sys_token'
         verbose_name = verbose_name_plural = '用户token表'
 
-__all__ = ['User','UserToken']
+__all__ = ['User','UserToken',"GlobalLdapConfiguration"]

@@ -20,11 +20,14 @@ class APIResponse(Response):
 
 class DataResponse(JsonResponse):
 
-    def __init__(self, code, message, status=200, data=None):
-        if data:
+    def __init__(self, code, message, status=200, data=None,**kwargs):
+        if data or data == []:
             data_dict = {"data": data, 'message': message, "code": code}
         else:
             data_dict = {'message': message, "code": code}
+        if kwargs:
+            for key, val in kwargs.items():
+                data_dict[key] = val
         super().__init__(data=data_dict, status=status)
 
 

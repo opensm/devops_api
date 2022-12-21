@@ -4,7 +4,7 @@ from rest_framework import serializers
 from utils.crypt import AesCrypt
 from devops_api.settings import SALT_KEY, SECRET_KEY
 from django.contrib import auth
-from apps.account.models import User, UserToken
+from apps.account.models import *
 from django.utils import timezone as datetime
 import time
 import hashlib
@@ -40,6 +40,8 @@ class SignInSerializer(serializers.Serializer):
         :param attrs:
         :return:
         """
+        if attrs['ldap'] and not GlobalLdapConfiguration.objects.all():
+            raise serializers.ValidationError(detail="登录失败，用户不存在！", code="auth")
         attrs['password'] = self.crypt.aesdecrypt(attrs['password'])
         if not attrs['password']:
             raise serializers.ValidationError('解码密码异常，请检查！')
@@ -62,8 +64,15 @@ class SignInSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ['password']
 
+
+class GlobalLdapConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalLdapConfiguration
+        fields = "__all__"
+        # exclude = ['password']
 
 class UserTokenSerializer(serializers.ModelSerializer):
     class Meta:
@@ -95,5 +104,6 @@ class UserTokenSerializer(serializers.ModelSerializer):
 __all__ = [
     "SignInSerializer",
     "UserTokenSerializer",
-    "UserSerializer"
+    "UserSerializer",
+    "GlobalLdapConfigurationSerializer"
 ]
