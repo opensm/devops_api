@@ -59,6 +59,7 @@ class DB(models.Model):
 class OrderNotice(models.Model):
     notice_type = models.CharField(verbose_name="通知类型",max_length=10,choices=(("wechat","企业微信"),("dingtalk","钉钉"),("email","邮件")),default='weichat')
     params = models.TextField(verbose_name="通知参数",null=False)
+    at_useful = models.BooleanField(default=False,verbose_name="at_useful")
 
 
 class Orders(models.Model):
@@ -71,13 +72,14 @@ class Orders(models.Model):
         verbose_name="kubernetes内容", null=False
     )
     db = models.ForeignKey(
-        verbose_name="所属db", null=False, on_delete=models.CASCADE, to="DB"
+        verbose_name="所属db", null=True, on_delete=models.CASCADE, to="DB",blank=True
     )
     db_content = models.TextField(verbose_name="模板内容", null=False)
     create_time = models.DateTimeField(auto_now_add=True)
     finish_time = models.DateTimeField(auto_created=True)
     status = models.IntegerField(verbose_name="任务状态", blank=False, null=False, default=0)
-    notice = models.ManyToManyField(verbose_name="通知类型",to="OrderNotice", blank=False, null=False)
+    notice = models.ManyToManyField(verbose_name="通知类型",to="OrderNotice")
+    old_orders = models.ManyToManyField(verbose_name="回退工单",to="Orders")
     desc = models.TextField(verbose_name="备注", blank=True)
 
     class Meta:

@@ -2,12 +2,9 @@
 from __future__ import print_function
 import kubernetes.client
 from kubernetes.client.rest import ApiException
-from apps.order.models import KubernetesModel, TemplateKubernetes, ExecList
+from apps.order.models import KubernetesModel, Orders
 from datetime import timedelta, timezone, datetime
-from Task.lib.settings import NOTICE_SETTINGS
 import time
-from Task.lib.settings import POD_CHECK_KEYS
-# from Task.lib.Log import *
 from devops_api.settings import SALT_KEY
 from utils.crypt import AesCrypt
 from Task.lib.notification import NoticeSender
@@ -25,7 +22,7 @@ class KubernetesClass:
     def connect_core(self, obj: KubernetesModel):
         try:
             crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
-            auth_key = crypt.aesdecrypt(obj.auth_passwd)
+            auth_key = crypt.aesdecrypt(obj.token)
             if not auth_key:
                 self._log.record(message='解密密码失败，请检查！')
                 return False
@@ -41,7 +38,7 @@ class KubernetesClass:
             self._log.record(message="认证异常！{}".format(error))
             return False
 
-    def connect_apps(self, obj: AuthKEY):
+    def connect_apps(self, obj: KubernetesModel):
         try:
             crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
             auth_key = crypt.aesdecrypt(obj.auth_passwd)
