@@ -7,7 +7,7 @@ from datetime import timedelta, timezone, datetime
 import time
 from devops_api.settings import SALT_KEY
 from utils.crypt import AesCrypt
-from Task.lib.notification import NoticeSender
+from utils.exceptions import *
 
 
 class KubernetesClass:
@@ -17,7 +17,36 @@ class KubernetesClass:
         self.api_core = None
         self._log = None
         self.limit_time = int(time.time()) - 300
-        self._notification = NoticeSender()
+        # self._notification = NoticeSender()
+    
+    def check_configuration(self, obj: KubernetesModel):
+        try:
+            if not obj.address.startswith('https://'):
+                obj.address = 'https://' + obj.address
+                
+        except Exception as e:
+
+
+    def connect(self,obj: KubernetesModel, api_type="CoreV1Api"):
+        try:
+            crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
+            auth_key = crypt.aesdecrypt(obj.token)
+            if not auth_key:
+                self._log.record(message='解密密码失败，请检查！')
+                return False
+            self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
+            self.configuration.host = "https://{}:{}".format(obj.address)
+            self.configuration.verify_ssl = False
+            self.configuration.debug = False
+            api_client = kubernetes.client.ApiClient(self.configuration)
+            _api = getattr(kubernetes.client,api_type)
+            self._api =_api(api_client)
+            self._log.record(message="认证成功!")
+            return True
+        except Exception as error:
+            self._log.record(message="认证异常！{}".format(error))
+            return False
+
 
     def connect_core(self, obj: KubernetesModel):
         try:
@@ -56,7 +85,63 @@ class KubernetesClass:
         except Exception as error:
             self._log.record(message="认证异常！{}".format(error))
             return False
-
+    
+    def list_namespaced_devployments(self,namespace):
+        try:
+            api_response = self.api_apps.list_deployment_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_statefulsets(self,namespace):
+        try:
+            api_response = self.api_apps.list_stateful_set_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_daemonsets(self,namespace):
+        try:
+            api_response = self.api_apps.list_daemon_set_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_cronjobs(self,namespace):
+        try:
+            api_response = self.api_apps.list_cron_job_for_all(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_services(self,namespace):
+        try:
+            api_response = self.api_core.list_service_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_configmaps(self,namespace):
+        try:
+            api_response = self.api_core.list_config_map_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
+    def list_namespaced_secrets(self,namespace):
+        try:
+            api_response = self.api_core.list_secret_for_all_namespaces(namespace)
+            return api_response
+        except Exception as error:
+            print(error)
+            return False
+    
     def retry_run_function(self, function, kwargs, times=5):
         if times <= 0:
             self._log.record(
@@ -82,6 +167,12 @@ class KubernetesClass:
                 kwargs=kwargs,
                 times=times
             )
+    
+    def get_deployments(self,namespace):
+        return self.api_core.list_namespaced_deployment(
+            namespace=namespace,
+            label_selector="app=kubedl"
+        )
 
     def get_deployment(self, deployment_name, namespace):
         """
