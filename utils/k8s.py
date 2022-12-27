@@ -19,25 +19,34 @@ class KubernetesClass:
         self.limit_time = int(time.time()) - 300
         # self._notification = NoticeSender()
     
-    def check_configuration(self, obj: KubernetesModel):
-        try:
-            if not obj.address.startswith('https://'):
-                obj.address = 'https://' + obj.address
-                
-        except Exception as e:
-
-
+    def set_configuration(self, obj: KubernetesModel):
+        """
+        :param obj:
+        :return:
+        """
+        crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
+        auth_key = crypt.aesdecrypt(obj.token)
+        if not auth_key:
+            raise ParamErrorException(message='Invalid auth key')
+        self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
+        self.configuration.verify_ssl = False
+        self.configuration.debug = False
+        if not obj.address.startswith('https://'):
+            self.configuration.host = 'https://' + obj.address
+        elif obj.address.startswith('http://'):
+            raise ParamErrorException(message='http:// is not allowed')
+        else:
+            self.configuration.host = obj.address
+    
     def connect(self,obj: KubernetesModel, api_type="CoreV1Api"):
+        """
+        :param obj:
+        :param api_type:
+        :return:
+        """
         try:
-            crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
-            auth_key = crypt.aesdecrypt(obj.token)
-            if not auth_key:
-                self._log.record(message='解密密码失败，请检查！')
-                return False
-            self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
-            self.configuration.host = "https://{}:{}".format(obj.address)
-            self.configuration.verify_ssl = False
-            self.configuration.debug = False
+            # 初始化configuration
+            self.set_configuration(obj=obj)
             api_client = kubernetes.client.ApiClient(self.configuration)
             _api = getattr(kubernetes.client,api_type)
             self._api =_api(api_client)
@@ -47,100 +56,78 @@ class KubernetesClass:
             self._log.record(message="认证异常！{}".format(error))
             return False
 
-
-    def connect_core(self, obj: KubernetesModel):
-        try:
-            crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
-            auth_key = crypt.aesdecrypt(obj.token)
-            if not auth_key:
-                self._log.record(message='解密密码失败，请检查！')
-                return False
-            self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
-            self.configuration.host = "https://{}:{}".format(obj.auth_host, obj.auth_port)
-            self.configuration.verify_ssl = False
-            self.configuration.debug = False
-            api_client = kubernetes.client.ApiClient(self.configuration)
-            self.api_core = kubernetes.client.CoreV1Api(api_client)
-            self._log.record(message="认证成功!")
-            return True
-        except Exception as error:
-            self._log.record(message="认证异常！{}".format(error))
-            return False
-
-    def connect_apps(self, obj: KubernetesModel):
-        try:
-            crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
-            auth_key = crypt.aesdecrypt(obj.auth_passwd)
-            if not auth_key:
-                self._log.record(message='解密密码失败，请检查！')
-                return False
-            self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
-            self.configuration.host = "https://{}:{}".format(obj.auth_host, obj.auth_port)
-            self.configuration.verify_ssl = False
-            self.configuration.debug = False
-            api_client = kubernetes.client.ApiClient(self.configuration)
-            self.api_apps = kubernetes.client.AppsV1Api(api_client)
-            self._log.record(message="认证成功!")
-            return True
-        except Exception as error:
-            self._log.record(message="认证异常！{}".format(error))
-            return False
+    def list_namespaced_resources(
+        self, 
+        namespace:str, 
+        api_class:str, 
+        resource:str,
+        **kwargs,
+        ):
+        """
+        :param namespace:
+        :param api_class: CoreV1Api,AppsV1Api
+        :param resource: deployment,stateful_set,daemon_set,cron_job,service,config_map,secret
+        :param kwargs field_selector=None,label_selector=None,timeout_seconds=600,limit=100,pretty=True
+        """
+        if not hasattr(self._api,api_class):
+            raise DataNotExistException(message="API class not found!")
+        _api_class = getattr(self._api.api,api_class)
+        if not hasattr(_api_class,"list_{}_for_all_namespaces".format(resource)):
+            raise DataNotExistException(message="Resource not found!")
+        _api_resource = getattr(_api_class,"list_{}_for_all_namespaces".format(resource))
+        request_kwargs= dict()
+        for key, value in kwargs.items():
+            if value:
+                request_kwargs[key] = value
+        res = _api_resource(namespace=namespace,**request_kwargs)        
+        return res
     
-    def list_namespaced_devployments(self,namespace):
-        try:
-            api_response = self.api_apps.list_deployment_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
+    def read_namespaced_resource(self,namespace,api_class,resource,name,pretty=True):
+        """
+        read_namespaced_resource
+        :param namespace:
+        :param api_class: CoreV1Api,AppsV1Api
+        :param resource: deployment,stateful_set,daemon_set,cron_job,service,config_map,secret
+        """
+        if not hasattr(self._api,api_class):
+            raise DataNotExistException(message="API class not found!")
+        _api_class = getattr(self._api.api,api_class)
+        if not hasattr(_api_class,"read_namespaced_{}".format(resource)):
+            raise DataNotExistException(message="Resource not found!")
+        _api_resource = getattr(_api_class,"read_namespaced_{}".format(resource))
+        res = _api_resource(namespace=namespace,name=name,pretty=pretty)
+        return res
     
-    def list_namespaced_statefulsets(self,namespace):
-        try:
-            api_response = self.api_apps.list_stateful_set_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
-    
-    def list_namespaced_daemonsets(self,namespace):
-        try:
-            api_response = self.api_apps.list_daemon_set_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
-    
-    def list_namespaced_cronjobs(self,namespace):
-        try:
-            api_response = self.api_apps.list_cron_job_for_all(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
-    
-    def list_namespaced_services(self,namespace):
-        try:
-            api_response = self.api_core.list_service_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
-    
-    def list_namespaced_configmaps(self,namespace):
-        try:
-            api_response = self.api_core.list_config_map_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
-    
-    def list_namespaced_secrets(self,namespace):
-        try:
-            api_response = self.api_core.list_secret_for_all_namespaces(namespace)
-            return api_response
-        except Exception as error:
-            print(error)
-            return False
+    def patch_namespaced_resource(
+        self,
+        api_class,
+        resource,
+        namespace,
+        name,
+        body,
+        **kwargs
+        ):
+        """
+        patch_namespaced_resource
+        :param api_class: CoreV1Api,AppsV1Api
+        :param resource: deployment,stateful_set,daemon_set,cron_job,service
+        :param namespace:
+        :param name:
+        :param body:
+        :param kwargs pretty=False,dry_run=True, field_manager=None, field_validation=None, force=False
+        """
+        if not hasattr(self._api,api_class):
+            raise DataNotExistException(message="API class not found!")
+        _api_class = getattr(self._api.api,api_class)
+        if not hasattr(_api_class,"patch_namespaced_{}".format(resource)):
+            raise DataNotExistException(message="Resource not found!")
+        _api_resource = getattr(_api_class,"patch_namespaced_{}".format(resource))
+        request_kwargs= dict()
+        for key, value in kwargs.items():
+            if value:
+                request_kwargs[key] = value
+        res = _api_resource(namespace=namespace,name=name,body=body,**request_kwargs)
+        return res
     
     def retry_run_function(self, function, kwargs, times=5):
         if times <= 0:
