@@ -2,3 +2,9 @@
 venv
 .vscode
 .idea
+apps/account/__pycache__
+apps/account/migrations/__pycache__
+apps/order/__pycache__
+apps/order/migrations/__pycache__
+devops/__pycache__
+utils/__pycache__
