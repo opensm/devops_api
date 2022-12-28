@@ -8,6 +8,8 @@ from apps.account.models import *
 from django.utils import timezone as datetime
 import time
 import hashlib
+from utils.exceptions import *
+from rest_framework import status
 
 
 class SignInSerializer(serializers.Serializer):
@@ -41,14 +43,19 @@ class SignInSerializer(serializers.Serializer):
         :return:
         """
         if attrs['ldap'] and not GlobalLdapConfiguration.objects.all():
-            raise serializers.ValidationError(detail="登录失败，用户不存在！", code="auth")
-        attrs['password'] = self.crypt.aesdecrypt(attrs['password'])
-        if not attrs['password']:
-            raise serializers.ValidationError('解码密码异常，请检查！')
-        user_obj = auth.authenticate(**attrs)
-        if not user_obj:
-            raise serializers.ValidationError(detail="登录失败，用户名或者密码错误！{}".format(attrs), code="auth")
-        User.objects.filter(**attrs).update(last_login=datetime.now())
+            raise serializers.ValidationError(detail="Login failed,Ldap user not exist!", code="auth")
+        try:
+            attrs['password'] = self.crypt.aesdecrypt(attrs['password'])
+            user_obj = auth.authenticate(**attrs)
+            if not user_obj:
+                raise serializers.ValidationError(detail="Login failed,user or password is not correct!{}".format(attrs), code="auth")
+            User.objects.filter(**attrs).update(last_login=datetime.now())
+        except ContentErrorException as exc:
+            raise serializers.ValidationError(message=exc.message,code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except serializers.ValidationError as err:
+            raise serializers.ValidationError(detail=err.detail, code=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(detail="User not exist!", code=status.HTTP_401_UNAUTHORIZED)        
         return attrs
 
     def validated_username(self, attrs):
@@ -57,7 +64,7 @@ class SignInSerializer(serializers.Serializer):
         if not User.objects.filter(
                 username=attrs
         ).exists():
-            raise serializers.ValidationError(detail="登录失败，用户不存在！", code="auth")
+            raise serializers.ValidationError(detail="Login failed,User not exist!", code="auth")
         return attrs
 
 

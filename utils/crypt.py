@@ -4,6 +4,7 @@ from Crypto.Cipher import \
     AES  # 注：python3 安装 Crypto 是 pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple pycryptodome<br><br>
 from Crypto.Util.Padding import pad
 import re
+from exceptions import *
 
 
 class AesCrypt:
@@ -43,8 +44,8 @@ class AesCrypt:
                 '',
                 self.decrypt_text.decode(self.encode_)
             )
-        except Exception:
-            result = False
+        except Exception as error:
+            raise ContentErrorException(message="decrypt failed:%s" % error)
         return result
 
 

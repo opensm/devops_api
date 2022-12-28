@@ -3,3 +3,6 @@ djangorestframework
 pycryptodome
 debugpy
 kubernetes
+simplejson
+pyyaml
+cerberus
