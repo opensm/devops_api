@@ -9,11 +9,11 @@ class ParamErrorException(Exception):
     code = 40004
     message = _('params error.')
 
-    def __init__(self, detail=None, code=None):
-        if detail is None:
-            detail = self.message
+    def __init__(self, message=None, code=None):
+        if message is None:
+            message = self.message
         else:
-            self.message = detail
+            self.message = message
         if code is None:
             code = self.code
         else:
@@ -27,11 +27,11 @@ class DataNotExistException(Exception):
     code = 40001
     message = _('data not found error.')
 
-    def __init__(self, detail=None, code=None):
-        if detail is None:
-            detail = self.message
+    def __init__(self, message=None, code=None):
+        if message is None:
+            message = self.message
         else:
-            self.message = detail
+            self.message = message
         if code is None:
             code = self.code
         else:
@@ -45,11 +45,11 @@ class PermissionDeniedException(Exception):
     code = 40003
     message = _('Permission denied error.')
 
-    def __init__(self, detail=None, code=None):
-        if detail is None:
-            detail = self.message
+    def __init__(self, message=None, code=None):
+        if message is None:
+            message = self.message
         else:
-            self.message = detail
+            self.message = message
         if code is None:
             code = self.code
         else:
@@ -63,11 +63,11 @@ class ServerErrorException(Exception):
     code = 50000
     message = _('Server error.')
 
-    def __init__(self, detail=None, code=None):
-        if detail is None:
-            detail = self.message
+    def __init__(self, message=None, code=None):
+        if message is None:
+            message = self.message
         else:
-            self.message = detail
+            self.message = message
         if code is None:
             code = self.code
         else:
@@ -81,11 +81,11 @@ class ContentErrorException(Exception):
     code = 50003
     message = _('Content error.')
 
-    def __init__(self, detail=None, code=None):
-        if detail is None:
-            detail = self.message
+    def __init__(self, message=None, code=None):
+        if message is None:
+            message = self.message
         else:
-            self.message = detail
+            self.message = message
         if code is None:
             code = self.code
         else:

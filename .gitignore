@@ -8,3 +8,4 @@ apps/order/__pycache__
 apps/order/migrations/__pycache__
 devops/__pycache__
 utils/__pycache__
+devops_api/__pycache__

@@ -14,41 +14,41 @@ deployment = {
         'selector': {'type': 'dict','required': True ,'schema': {
             'matchLabels': {'type': 'dict', 'required': True}
             },
-        'template': {
-            'type': 'dict','required': True, 'schema': {
-                'metadata': {'type': 'dict','required': True},
-                'spec': {
-                    'type': 'dict','required': True,'schema': {
-                        'containers': {
-                            'type': 'list',
-                            'items': [{
-                                'type': 'dict','schema': {
-                                    'name': {'type': 'string','required': True},
-                                    'image': {'type': 'string','required': True},
-                                    'imagePullPolicy': {'type': 'string','required': True},
-                                    'ports': {'type': 'list','required': False, 'items': [{
-                                        'type': 'dict','required': True, 'schema': {
-                                           'protocol':{'type': 'string','required': True},
-                                           'containerPort': {'type': 'integer','required': True},
-                                        }
-                                    }]},
-                                    'resources': {'type':'dict','required': 'FaLse','schema': {
-                                        'limits': {
-                                            'type': 'dict','required': True,'schema':{
-                                                    'type': 'string','required': True,
-                                                    'cpu':{'type': 'integer','required': True},
-                                                    'memory':{'type': 'integer','required': True}
+            'template': {
+                'type': 'dict','required': True, 'schema': {
+                    'metadata': {'type': 'dict','required': True},
+                    'spec': {
+                        'type': 'dict','required': True,'schema': {
+                            'containers': {
+                                'type': 'list',
+                                'items': [{
+                                    'type': 'dict','schema': {
+                                        'name': {'type': 'string','required': True},
+                                        'image': {'type': 'string','required': True},
+                                        'imagePullPolicy': {'type': 'string','required': True},
+                                        'ports': {'type': 'list','required': False, 'items': [{
+                                            'type': 'dict','required': True, 'schema': {
+                                            'protocol':{'type': 'string','required': True},
+                                            'containerPort': {'type': 'integer','required': True},
+                                            }
+                                        }]},
+                                        'resources': {'type':'dict','required': 'FaLse','schema': {
+                                            'limits': {
+                                                'type': 'dict','required': True,'schema':{
+                                                        'type': 'string','required': True,
+                                                        'cpu':{'type': 'integer','required': True},
+                                                        'memory':{'type': 'integer','required': True}
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            }]
+                                }]
+                            }
                         }
                     }
                 }
-            }
-        },
+            },
         'strategy': {'type': 'dict','required': False },
         }
         },

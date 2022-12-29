@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from utils.response import *
 from apps.order.models import *
 from apps.order.serializers import *
+from utils.kubernetes import KubernetesClass
+from utils.exceptions import *
 
 # Create your views here.
 
@@ -11,8 +13,18 @@ class KubernetesNamespaceRsyncController(APIView):
         kubernetes_id = request.GET.get("id")
         try:
             data = KubernetesModel.objects.get(id=kubernetes_id)
+            print(data)
+            k8s = KubernetesClass()
+            k8s.connect(obj=data,api_type="CoreV1Api")
+            namespaces=k8s.list_namespace()
+            for namespace in namespaces:
+                print(namespace)
+        except KubernetesModel.DoesNotExist:
+            return DataResponse(code=40001,message="Couldn't find Kubernetes message.")
+        except PermissionDeniedException as exc:
+            return DataResponse(code=exc.code,message=exc.message)
         except Exception as e:
-            return DataResponse(code=20001,message="获取集群信息异常！")
+            return DataResponse(code=20001,message="获取集群信息异常,error:{}".format(e))
 
 class KubernetesManager(APIView):
 
@@ -22,8 +34,6 @@ class KubernetesManager(APIView):
         else:
             object_data = KubernetesModel.objects.filter(**kwargs)
         
-        
-
         data = KubernetesModelSerializer(instance=object_data, many=True)
         print(data.data)
         # data_results = { "data": data.data,"total": len(data.data)}
@@ -94,9 +104,10 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
                 **kwargs)
 
         data = KubernetesWorkLoadServiceIngressTemplateSerializer(
-            instance=object_data, many=True)
+            instance=object_data, many=True
+        )
 
-        return DataResponse(data=data.data, message="获取kubernetes模板信息成功！", code=20000)
+        return DataResponse(data=data.data, message="获取kubernetes模板信息成功!", code=20000)
 
     def put(self, requests, **kwargs):
         if not kwargs:
@@ -250,5 +261,6 @@ __all__ = [
     'KubernetesNameSpaceManager',
     'KubernetesWorkLoadServiceIngressTemplateManager',
     'DBManager',
-    'OrdersManager'
+    'OrdersManager',
+    'KubernetesNamespaceRsyncController'
 ]

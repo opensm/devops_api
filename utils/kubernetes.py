@@ -15,8 +15,7 @@ from utils.exceptions import *
 class KubernetesClass:
     def __init__(self):
         self.configuration = client.Configuration()
-        self.api_apps = None
-        self.api_core = None
+        self._api = None
         self._log = None
         self.limit_time = int(time.time()) - 300
         # self._notification = NoticeSender()
@@ -52,11 +51,11 @@ class KubernetesClass:
             api_client = kubernetes.client.ApiClient(self.configuration)
             _api = getattr(kubernetes.client,api_type)
             self._api =_api(api_client)
-            self._log.record(message="认证成功!")
-            return True
+            print("认证成功!")
         except Exception as error:
-            self._log.record(message="认证异常！{}".format(error))
-            return False
+            # self._log.record(message="认证异常！{}".format(error))
+            print("认证异常！{}".format(error))
+            raise PermissionDeniedException(message="kubernetes login is not allowed")
 
     def list_namespaced_resources(
         self, 
@@ -73,10 +72,9 @@ class KubernetesClass:
         """
         if not hasattr(self._api,api_class):
             raise DataNotExistException(message="API class not found!")
-        _api_class = getattr(self._api.api,api_class)
-        if not hasattr(_api_class,"list_{}_for_all_namespaces".format(resource)):
+        if not hasattr(self._api,"list_{}_for_all_namespaces".format(resource)):
             raise DataNotExistException(message="Resource not found!")
-        _api_resource = getattr(_api_class,"list_{}_for_all_namespaces".format(resource))
+        _api_resource = getattr(self._api,"list_{}_for_all_namespaces".format(resource))
         request_kwargs= dict()
         for key, value in kwargs.items():
             if value:
@@ -84,25 +82,34 @@ class KubernetesClass:
         res = _api_resource(namespace=namespace,**request_kwargs)        
         return res
     
-    def read_namespaced_resource(self,namespace,api_class,resource,name,pretty=True):
+    def list_namespace(self,pretty=True,**kwargs):
+        """
+        :return:
+        """
+        print(self._api)
+        request_kwargs = dict()
+        for key, value in kwargs.items():
+            if value:
+                request_kwargs[key] = value
+            else:
+                continue
+        res = self.list_namespace(pretty=pretty,**request_kwargs)
+        return res
+    
+    def read_namespaced_resource(self,namespace,resource,name,pretty=True):
         """
         read_namespaced_resource
         :param namespace:
-        :param api_class: CoreV1Api,AppsV1Api
         :param resource: deployment,stateful_set,daemon_set,cron_job,service,config_map,secret
         """
-        if not hasattr(self._api,api_class):
-            raise DataNotExistException(message="API class not found!")
-        _api_class = getattr(self._api.api,api_class)
-        if not hasattr(_api_class,"read_namespaced_{}".format(resource)):
+        if not hasattr(self._api,"read_namespaced_{}".format(resource)):
             raise DataNotExistException(message="Resource not found!")
-        _api_resource = getattr(_api_class,"read_namespaced_{}".format(resource))
+        _api_resource = getattr(self._api,"read_namespaced_{}".format(resource))
         res = _api_resource(namespace=namespace,name=name,pretty=pretty)
         return res
     
     def patch_namespaced_resource(
         self,
-        api_class,
         resource,
         namespace,
         name,
@@ -111,19 +118,15 @@ class KubernetesClass:
         ):
         """
         patch_namespaced_resource
-        :param api_class: CoreV1Api,AppsV1Api
         :param resource: deployment,stateful_set,daemon_set,cron_job,service
         :param namespace:
         :param name:
         :param body:
         :param kwargs pretty=False,dry_run=True, field_manager=None, field_validation=None, force=False
         """
-        if not hasattr(self._api,api_class):
-            raise DataNotExistException(message="API class not found!")
-        _api_class = getattr(self._api.api,api_class)
-        if not hasattr(_api_class,"patch_namespaced_{}".format(resource)):
+        if not hasattr(self._api,"patch_namespaced_{}".format(resource)):
             raise DataNotExistException(message="Resource not found!")
-        _api_resource = getattr(_api_class,"patch_namespaced_{}".format(resource))
+        _api_resource = getattr(self._api,"patch_namespaced_{}".format(resource))
         request_kwargs= dict()
         for key, value in kwargs.items():
             if value:
@@ -161,6 +164,7 @@ class KubernetesClass:
         :param content:
         :return:
         """
+        pass
         
         
 

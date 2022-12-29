@@ -4,7 +4,7 @@ from Crypto.Cipher import \
     AES  # 注：python3 安装 Crypto 是 pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple pycryptodome<br><br>
 from Crypto.Util.Padding import pad
 import re
-from exceptions import *
+from utils.exceptions import *
 
 
 class AesCrypt:

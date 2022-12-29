@@ -141,7 +141,7 @@ class Login(APIView):
         except Exception as e:
             return DataResponse(
                 code=40001,
-                message="登录失败，用户token更新失败，{0}".format(e)
+                message="登录失败,用户token更新失败,{0}".format(e)
             )
 
     def get(self, request):
