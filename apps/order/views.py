@@ -13,7 +13,6 @@ class KubernetesNamespaceRsyncController(APIView):
         kubernetes_id = request.GET.get("id")
         try:
             data = KubernetesModel.objects.get(id=kubernetes_id)
-            print(data)
             k8s = KubernetesClass()
             k8s.connect(obj=data,api_type="CoreV1Api")
             namespaces=k8s.list_namespace()
