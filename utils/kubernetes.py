@@ -70,8 +70,6 @@ class KubernetesClass:
         :param resource: deployment,stateful_set,daemon_set,cron_job,service,config_map,secret
         :param kwargs field_selector=None,label_selector=None,timeout_seconds=600,limit=100,pretty=True
         """
-        if not hasattr(self._api,api_class):
-            raise DataNotExistException(message="API class not found!")
         if not hasattr(self._api,"list_{}_for_all_namespaces".format(resource)):
             raise DataNotExistException(message="Resource not found!")
         _api_resource = getattr(self._api,"list_{}_for_all_namespaces".format(resource))
