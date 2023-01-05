@@ -50,7 +50,7 @@ class KubernetesManager(APIView):
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
-                x.save()
+                serializer_data.save()
 
         return DataResponse(message="更新数据成功！", code=20000)
 
