@@ -86,14 +86,13 @@ class KubernetesClass:
         """
         :return:
         """
-        print(self._api)
         request_kwargs = dict()
         for key, value in kwargs.items():
             if value:
                 request_kwargs[key] = value
             else:
                 continue
-        res = self.list_namespace(pretty=pretty,**request_kwargs)
+        res = self._api.list_namespace(pretty=pretty,**request_kwargs)
         return res
     
     def read_namespaced_resource(self,namespace,resource,name,pretty=True):
