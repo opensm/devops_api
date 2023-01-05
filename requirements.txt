@@ -6,3 +6,5 @@ kubernetes
 simplejson
 pyyaml
 cerberus
+pymysql
+django-cors-headers
