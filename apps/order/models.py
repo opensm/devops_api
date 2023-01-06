@@ -8,7 +8,7 @@ class KubernetesModel(models.Model):
     token = models.TextField(verbose_name="认证token", blank=True)
     regular = models.TextField(verbose_name="正则信息",null=True)
     ca = models.TextField(verbose_name="证书",null=True)
-    debug = models.BooleanField(default=False,verbose_name="debug",null=True)
+    debug = models.BooleanField(default=False,verbose_name="debug",null=False)
     desc = models.TextField(verbose_name="备注", blank=True)
 
     class Meta:
