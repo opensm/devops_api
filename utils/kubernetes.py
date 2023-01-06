@@ -29,9 +29,14 @@ class KubernetesClass:
         auth_key = crypt.aesdecrypt(obj.token)
         if not auth_key:
             raise ParamErrorException(message='Invalid auth key')
-        self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
-        self.configuration.verify_ssl = False
-        self.configuration.debug = False
+        #self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
+        self.configuration.api_key = auth_key
+        self.configuration.api_key_prefix['authorization'] = 'Bearer'
+        if obj.ca:
+            self.configuration.ssl_ca_cert = obj.ca
+        else:
+            self.configuration.ssl_verify = False
+        self.configuration.debug = True
         if not obj.address.startswith('https://'):
             self.configuration.host = 'https://' + obj.address
         elif obj.address.startswith('http://'):
