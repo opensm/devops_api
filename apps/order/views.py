@@ -84,10 +84,11 @@ class KubernetesManager(APIView):
 class KubernetesNameSpaceManager(APIView):
 
     def get(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             object_data = KubernetesNameSpace.objects.all()
         else:
-            object_data = KubernetesNameSpace.objects.filter(**kwargs)
+            object_data = KubernetesNameSpace.objects.filter(**_kwargs)
 
         data = KubernetesNameSpaceSerializer(instance=object_data, many=True)
 
@@ -97,11 +98,13 @@ class KubernetesNameSpaceManager(APIView):
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
     def get(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.all()
         else:
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
-                **kwargs)
+                **_kwargs
+            )
 
         data = KubernetesWorkLoadServiceIngressTemplateSerializer(
             instance=object_data, many=True
@@ -110,10 +113,12 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
         return DataResponse(data=data.data, message="获取kubernetes模板信息成功!", code=20000)
 
     def put(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
         object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
-            **kwargs)
+            **_kwargs
+        )
         if not object_data:
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
@@ -132,8 +137,10 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
         :param kwargs:
         :return:
         """
+        _kwargs = request.GET.copy()
         KubernetesWorkLoadServiceIngressTemplate.objects.filter(
-            **kwargs).delete()
+            **_kwargs
+        ).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
     def post(self, request):
@@ -155,19 +162,21 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 class DBManager(APIView):
 
     def get(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             object_data = DB.objects.all()
         else:
-            object_data = DB.objects.filter(**kwargs)
+            object_data = DB.objects.filter(**_kwargs)
 
         data = DBSerializer(instance=object_data, many=True)
 
         return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
 
     def put(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
-        object_data = DB.objects.filter(**kwargs)
+        object_data = DB.objects.filter(**_kwargs)
         if not object_data:
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
@@ -185,7 +194,8 @@ class DBManager(APIView):
         :param kwargs:
         :return:
         """
-        DB.objects.filter(**kwargs).delete()
+        _kwargs = request.GET.copy()
+        DB.objects.filter(**_kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
     def post(self, request):
@@ -207,19 +217,21 @@ class DBManager(APIView):
 class OrdersManager(APIView):
 
     def get(self, request, **kwargs):
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             object_data = Orders.objects.all()
         else:
-            object_data = Orders.objects.filter(**kwargs)
+            object_data = Orders.objects.filter(**_kwargs)
 
         data = OrdersSerializer(instance=object_data, many=True)
 
         return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
 
     def put(self, request, **kwargs):
+        _kwargs = request.GET.copy()
         if not kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
-        object_data = Orders.objects.filter(**kwargs)
+        object_data = Orders.objects.filter(**_kwargs)
         if not object_data:
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
@@ -237,7 +249,8 @@ class OrdersManager(APIView):
         :param kwargs:
         :return:
         """
-        OrdersSerializer.objects.filter(**kwargs).delete()
+        _kwargs = request.GET.copy()
+        OrdersSerializer.objects.filter(**_kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
     def post(self, request):
