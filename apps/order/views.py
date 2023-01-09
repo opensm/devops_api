@@ -265,7 +265,7 @@ class OrdersManager(APIView):
                 else:
                     x.save()
             return DataResponse(message="更新数据成功！", code=20000)
-        except ParamErrorException as error
+        except ParamErrorException as error:
             return DataResponse(message=error.message, code=error.code)
 
     def delete(self, request, **kwargs):
