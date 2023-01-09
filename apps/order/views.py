@@ -27,7 +27,7 @@ class KubernetesNamespaceRsyncController(APIView):
 
 class KubernetesManager(APIView):
 
-    def get(self, requests, **kwargs):
+    def get(self, request, **kwargs):
         if not kwargs:
             object_data = KubernetesModel.objects.all()
         else:
@@ -53,26 +53,27 @@ class KubernetesManager(APIView):
 
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def delete(self, requests, **kwargs):
+    def delete(self, request, **kwargs):
         """
-        :param requests:
+        :param request:
         :param kwargs:
         :return:
         """
-        if not kwargs:
+        _kwargs = request.GET.copy()
+        if not _kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
-        KubernetesModel.objects.filter(**kwargs).delete()
+        KubernetesModel.objects.filter(**_kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def post(self, requests):
+    def post(self, request):
         """
-        :param requests:
+        :param request:
         :return:
         """
-        if not requests.data:
+        if not request.data:
             return DataResponse(message="请求参数错误！", code=20001)
         else:
-            serializer_data = KubernetesModelSerializer(data=requests.data)
+            serializer_data = KubernetesModelSerializer(data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -82,7 +83,7 @@ class KubernetesManager(APIView):
 
 class KubernetesNameSpaceManager(APIView):
 
-    def get(self, requests, **kwargs):
+    def get(self, request, **kwargs):
         if not kwargs:
             object_data = KubernetesNameSpace.objects.all()
         else:
@@ -95,7 +96,7 @@ class KubernetesNameSpaceManager(APIView):
 
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
-    def get(self, requests, **kwargs):
+    def get(self, request, **kwargs):
         if not kwargs:
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.all()
         else:
@@ -108,7 +109,7 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
         return DataResponse(data=data.data, message="获取kubernetes模板信息成功!", code=20000)
 
-    def put(self, requests, **kwargs):
+    def put(self, request, **kwargs):
         if not kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
         object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
@@ -117,7 +118,7 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
             serializer_data = KubernetesWorkLoadServiceIngressTemplateSerializer(
-                instance=x, data=requests.data)
+                instance=x, data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -125,9 +126,9 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def delete(self, requests, **kwargs):
+    def delete(self, request, **kwargs):
         """
-        :param requests:
+        :param request:
         :param kwargs:
         :return:
         """
@@ -135,15 +136,15 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
             **kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def post(self, requests):
+    def post(self, request):
         """
-        :param requests:
+        :param request:
         :return:
         """
-        if not requests.data:
+        if not request.data:
             return DataResponse(message="请求参数错误！", code=20001)
         else:
-            serializer_data = KubernetesModelSerializer(data=requests.data)
+            serializer_data = KubernetesModelSerializer(data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -153,7 +154,7 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
 class DBManager(APIView):
 
-    def get(self, requests, **kwargs):
+    def get(self, request, **kwargs):
         if not kwargs:
             object_data = DB.objects.all()
         else:
@@ -163,14 +164,14 @@ class DBManager(APIView):
 
         return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
 
-    def put(self, requests, **kwargs):
+    def put(self, request, **kwargs):
         if not kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
         object_data = DB.objects.filter(**kwargs)
         if not object_data:
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
-            serializer_data = DBSerializer(instance=x, data=requests.data)
+            serializer_data = DBSerializer(instance=x, data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -178,24 +179,24 @@ class DBManager(APIView):
 
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def delete(self, requests, **kwargs):
+    def delete(self, request, **kwargs):
         """
-        :param requests:
+        :param request:
         :param kwargs:
         :return:
         """
         DB.objects.filter(**kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def post(self, requests):
+    def post(self, request):
         """
-        :param requests:
+        :param request:
         :return:
         """
-        if not requests.data:
+        if not request.data:
             return DataResponse(message="请求参数错误！", code=20001)
         else:
-            serializer_data = DBSerializer(data=requests.data)
+            serializer_data = DBSerializer(data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -205,7 +206,7 @@ class DBManager(APIView):
 
 class OrdersManager(APIView):
 
-    def get(self, requests, **kwargs):
+    def get(self, request, **kwargs):
         if not kwargs:
             object_data = Orders.objects.all()
         else:
@@ -215,14 +216,14 @@ class OrdersManager(APIView):
 
         return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
 
-    def put(self, requests, **kwargs):
+    def put(self, request, **kwargs):
         if not kwargs:
             return DataResponse(message="输入参数错误！", code=20001)
         object_data = Orders.objects.filter(**kwargs)
         if not object_data:
             return DataResponse(message="获取更新数据错误", code=20002)
         for x in object_data:
-            serializer_data = OrdersSerializer(instance=x, data=requests.data)
+            serializer_data = OrdersSerializer(instance=x, data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
@@ -230,24 +231,24 @@ class OrdersManager(APIView):
 
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def delete(self, requests, **kwargs):
+    def delete(self, request, **kwargs):
         """
-        :param requests:
+        :param request:
         :param kwargs:
         :return:
         """
         OrdersSerializer.objects.filter(**kwargs).delete()
         return DataResponse(message="更新数据成功！", code=20000)
 
-    def post(self, requests):
+    def post(self, request):
         """
-        :param requests:
+        :param request:
         :return:
         """
-        if not requests.data:
+        if not request.data:
             return DataResponse(message="请求参数错误！", code=20001)
         else:
-            serializer_data = OrdersSerializer(data=requests.data)
+            serializer_data = OrdersSerializer(data=request.data)
             if not serializer_data.is_valid():
                 return DataResponse(message=serializer_data.errors, code=20002)
             else:
