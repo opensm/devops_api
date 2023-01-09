@@ -4,15 +4,16 @@ from apps.order.models import *
 from apps.order.serializers import *
 from utils.kubernetes import KubernetesClass
 from utils.exceptions import *
+from utils.requests import *
 
 # Create your views here.
 
 class KubernetesNamespaceRsyncController(APIView):
 
     def get(self, request, *args, **kwargs):
-        kubernetes_id = request.GET.get("id")
         try:
-            data = KubernetesModel.objects.get(id=kubernetes_id)
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            data = KubernetesModel.objects.get(**_kwargs)
             k8s = KubernetesClass()
             k8s.connect(obj=data,api_type="CoreV1Api")
             namespaces=k8s.list_namespace()
@@ -28,16 +29,17 @@ class KubernetesNamespaceRsyncController(APIView):
 class KubernetesManager(APIView):
 
     def get(self, request, **kwargs):
-        if not kwargs:
-            object_data = KubernetesModel.objects.all()
-        else:
-            object_data = KubernetesModel.objects.filter(**kwargs)
-        
-        data = KubernetesModelSerializer(instance=object_data, many=True)
-        print(data.data)
-        # data_results = { "data": data.data,"total": len(data.data)}
-
-        return DataResponse(data=data.data, message="获取集群信息成功！", code=20000,total=len(data.data))
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            if not kwargs:
+                object_data = KubernetesModel.objects.all()
+            else:
+                object_data = KubernetesModel.objects.filter(**kwargs)
+            
+            data = KubernetesModelSerializer(instance=object_data, many=True)
+            return DataResponse(data=data.data, message="获取集群信息成功！", code=20000,total=len(data.data))
+        except ParamErrorException as error:
+            return DataResponse(code=error.code,message=error.message)
 
     def put(self, request, **kwargs):
         object_data = KubernetesModel.objects.filter(id=request.data.get('id'))
@@ -59,11 +61,14 @@ class KubernetesManager(APIView):
         :param kwargs:
         :return:
         """
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            return DataResponse(message="输入参数错误！", code=20001)
-        KubernetesModel.objects.filter(**_kwargs).delete()
-        return DataResponse(message="更新数据成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            if not _kwargs:
+                return DataResponse(message="输入参数错误！", code=20001)
+            KubernetesModel.objects.filter(**_kwargs).delete()
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def post(self, request):
         """
@@ -84,21 +89,24 @@ class KubernetesManager(APIView):
 class KubernetesNameSpaceManager(APIView):
 
     def get(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            object_data = KubernetesNameSpace.objects.all()
-        else:
-            object_data = KubernetesNameSpace.objects.filter(**_kwargs)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesNameSpace)
+            if not _kwargs:
+                object_data = KubernetesNameSpace.objects.all()
+            else:
+                object_data = KubernetesNameSpace.objects.filter(**_kwargs)
 
-        data = KubernetesNameSpaceSerializer(instance=object_data, many=True)
+            data = KubernetesNameSpaceSerializer(instance=object_data, many=True)
 
-        return DataResponse(data=data.data, message="获取集群命名空间信息成功！", code=20000)
+            return DataResponse(data=data.data, message="获取集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
 
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
     def get(self, request, **kwargs):
-        _kwargs = request.GET.copy()
+        _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
         if not _kwargs:
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.all()
         else:
@@ -113,23 +121,27 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
         return DataResponse(data=data.data, message="获取kubernetes模板信息成功!", code=20000)
 
     def put(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            return DataResponse(message="输入参数错误！", code=20001)
-        object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
-            **_kwargs
-        )
-        if not object_data:
-            return DataResponse(message="获取更新数据错误", code=20002)
-        for x in object_data:
-            serializer_data = KubernetesWorkLoadServiceIngressTemplateSerializer(
-                instance=x, data=request.data)
-            if not serializer_data.is_valid():
-                return DataResponse(message=serializer_data.errors, code=20002)
-            else:
-                x.save()
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
+            if not _kwargs:
+                return DataResponse(message="输入参数错误！", code=20001)
+            object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
+                **_kwargs
+            )
+            if not object_data:
+                return DataResponse(message="获取更新数据错误", code=20002)
+            for x in object_data:
+                serializer_data = KubernetesWorkLoadServiceIngressTemplateSerializer(
+                    instance=x, data=request.data)
+                if not serializer_data.is_valid():
+                    return DataResponse(message=serializer_data.errors, code=20002)
+                else:
+                    x.save()
 
-        return DataResponse(message="更新数据成功！", code=20000)
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
 
     def delete(self, request, **kwargs):
         """
@@ -137,11 +149,14 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
         :param kwargs:
         :return:
         """
-        _kwargs = request.GET.copy()
-        KubernetesWorkLoadServiceIngressTemplate.objects.filter(
-            **_kwargs
-        ).delete()
-        return DataResponse(message="更新数据成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
+            KubernetesWorkLoadServiceIngressTemplate.objects.filter(
+                **_kwargs
+            ).delete()
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def post(self, request):
         """
@@ -162,31 +177,35 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 class DBManager(APIView):
 
     def get(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            object_data = DB.objects.all()
-        else:
-            object_data = DB.objects.filter(**_kwargs)
-
-        data = DBSerializer(instance=object_data, many=True)
-
-        return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            if not _kwargs:
+                object_data = DB.objects.all()
+            else:
+                object_data = DB.objects.filter(**_kwargs)
+            data = DBSerializer(instance=object_data, many=True)
+            return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def put(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            return DataResponse(message="输入参数错误！", code=20001)
-        object_data = DB.objects.filter(**_kwargs)
-        if not object_data:
-            return DataResponse(message="获取更新数据错误", code=20002)
-        for x in object_data:
-            serializer_data = DBSerializer(instance=x, data=request.data)
-            if not serializer_data.is_valid():
-                return DataResponse(message=serializer_data.errors, code=20002)
-            else:
-                x.save()
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            if not _kwargs:
+                return DataResponse(message="输入参数错误！", code=20001)
+            object_data = DB.objects.filter(**_kwargs)
+            if not object_data:
+                return DataResponse(message="获取更新数据错误", code=20002)
+            for x in object_data:
+                serializer_data = DBSerializer(instance=x, data=request.data)
+                if not serializer_data.is_valid():
+                    return DataResponse(message=serializer_data.errors, code=20002)
+                else:
+                    x.save()
 
-        return DataResponse(message="更新数据成功！", code=20000)
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def delete(self, request, **kwargs):
         """
@@ -194,9 +213,12 @@ class DBManager(APIView):
         :param kwargs:
         :return:
         """
-        _kwargs = request.GET.copy()
-        DB.objects.filter(**_kwargs).delete()
-        return DataResponse(message="更新数据成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            DB.objects.filter(**_kwargs).delete()
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def post(self, request):
         """
@@ -217,31 +239,34 @@ class DBManager(APIView):
 class OrdersManager(APIView):
 
     def get(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not _kwargs:
-            object_data = Orders.objects.all()
-        else:
-            object_data = Orders.objects.filter(**_kwargs)
-
-        data = OrdersSerializer(instance=object_data, many=True)
-
-        return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            if not _kwargs:
+                object_data = Orders.objects.all()
+            else:
+                object_data = Orders.objects.filter(**_kwargs)
+            data = OrdersSerializer(instance=object_data, many=True)
+            return DataResponse(data=data.data, message="获取集群信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def put(self, request, **kwargs):
-        _kwargs = request.GET.copy()
-        if not kwargs:
-            return DataResponse(message="输入参数错误！", code=20001)
-        object_data = Orders.objects.filter(**_kwargs)
-        if not object_data:
-            return DataResponse(message="获取更新数据错误", code=20002)
-        for x in object_data:
-            serializer_data = OrdersSerializer(instance=x, data=request.data)
-            if not serializer_data.is_valid():
-                return DataResponse(message=serializer_data.errors, code=20002)
-            else:
-                x.save()
-
-        return DataResponse(message="更新数据成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            if not kwargs:
+                return DataResponse(message="输入参数错误！", code=20001)
+            object_data = Orders.objects.filter(**_kwargs)
+            if not object_data:
+                return DataResponse(message="获取更新数据错误", code=20002)
+            for x in object_data:
+                serializer_data = OrdersSerializer(instance=x, data=request.data)
+                if not serializer_data.is_valid():
+                    return DataResponse(message=serializer_data.errors, code=20002)
+                else:
+                    x.save()
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error
+            return DataResponse(message=error.message, code=error.code)
 
     def delete(self, request, **kwargs):
         """
@@ -249,9 +274,12 @@ class OrdersManager(APIView):
         :param kwargs:
         :return:
         """
-        _kwargs = request.GET.copy()
-        OrdersSerializer.objects.filter(**_kwargs).delete()
-        return DataResponse(message="更新数据成功！", code=20000)
+        try:
+            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            OrdersSerializer.objects.filter(**_kwargs).delete()
+            return DataResponse(message="更新数据成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
 
     def post(self, request):
         """
