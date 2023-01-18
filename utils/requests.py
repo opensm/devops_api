@@ -1,5 +1,5 @@
 
-from utils.exceptions import *
+from utils.exceptions import ParamErrorException
 
 def format_request_params(request,model):
     print(request)
