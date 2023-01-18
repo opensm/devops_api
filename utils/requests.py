@@ -2,6 +2,7 @@
 from utils.exceptions import *
 
 def format_request_params(request,model):
+    print(request)
     params = {}
     for key, value in request.GET.items():
         if len(value) == 0:
