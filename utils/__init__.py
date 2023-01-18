@@ -4,7 +4,7 @@ from .kubernetes import KubernetesClass
 from .exceptions import ParamErrorException,DataNotExistException,PermissionDeniedException,ServerErrorException,ContentErrorException
 from .crypt import AesCrypt
 from .devops_api_log import logger
-
+from kubernetes.client.rest import ApiException
 
 __all__ = [
     'AesCrypt',
@@ -17,5 +17,6 @@ __all__ = [
     'PermissionDeniedException',
     'ServerErrorException',
     'ContentErrorException',
-    'logger'
+    'logger',
+    'ApiException'
 ]

@@ -2,16 +2,13 @@
 from __future__ import print_function
 import kubernetes.client
 from kubernetes import client,utils
-from kubernetes.client.rest import ApiException
+# from kubernetes.client.rest import ApiException
 from apps.order.models import KubernetesModel, Orders
 from datetime import timedelta, timezone, datetime
 import time,os,yaml
 import simplejson as json
 from devops_api.settings import SALT_KEY
 from utils import *
-# from utils.crypt import AesCrypt
-# from utils.exceptions import *
-# from utils.devops_api_log import logger
 
 class KubernetesClass:
     def __init__(self):
