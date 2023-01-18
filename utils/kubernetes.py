@@ -10,7 +10,7 @@ import simplejson as json
 from devops_api.settings import SALT_KEY
 from utils.crypt import AesCrypt
 from utils.exceptions import *
-
+from utils.devops_api_log import logger
 
 class KubernetesClass:
     def __init__(self):
@@ -34,9 +34,11 @@ class KubernetesClass:
             raise ParamErrorException(message='Invalid auth key')
         #self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
         self.configuration.api_key = auth_key
+        logger.info(msg='Current API key: {}'.format(self.configuration.api_key))
         self.configuration.api_key_prefix['authorization'] = 'Bearer'
         if obj.ca:
             self.configuration.ssl_ca_cert = ca
+            logger.info(msg='Current API Ca: {}'.format(self.configuration.ssl_ca_cert))
         else:
             self.configuration.ssl_verify = False
         self.configuration.debug = True
