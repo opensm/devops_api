@@ -220,7 +220,7 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['file'], # 指定file handler处理器，表示只写入到文件
-            'level':'DEBUG',
+            'level':'INFO',
             'propagate': True,
         },
     },

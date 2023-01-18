@@ -62,10 +62,12 @@ class KubernetesClass:
             api_client = kubernetes.client.ApiClient(self.configuration)
             _api = getattr(kubernetes.client,api_type)
             self._api =_api(api_client)
-            print("认证成功!")
+            logger.info(msg="Auth success!")
+        except ParamErrorException as e:
+            logger.info(msg="Auth failed,{}".format(e.message))
+            raise PermissionDeniedException(message=e.message,code=e.code)
         except Exception as error:
-            # self._log.record(message="认证异常！{}".format(error))
-            print("认证异常！{}".format(error))
+            logger.error("Auth failed,{}".format(error))
             raise PermissionDeniedException(message="kubernetes login is not allowed")
 
     def list_namespaced_resources(
