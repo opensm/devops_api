@@ -12,7 +12,7 @@ class KubernetesNamespaceRsyncController(APIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            _kwargs = format_request_params(request=request,model=KubernetesModel)
             data = KubernetesModel.objects.get(**_kwargs)
             k8s = KubernetesClass()
             k8s.connect(obj=data,api_type="CoreV1Api")
