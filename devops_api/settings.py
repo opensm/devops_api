@@ -179,22 +179,22 @@ LOGGING = {
         },
     },
     # handlers：用来定义具体处理日志的方式，可以定义多种，"default"就是默认方式，"console"就是打印到控制台方式。file是写入到文件的方式，注意使用的class不同
-    'handlers': { # 处理器，在这里定义了两个个处理器
+    'handlers': { # 处理器，在这里定义了两个个处理器INFO
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'stream': 'ext://sys.stdout',   # 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver >> /home/aea/log/test.log
             # 'stream': open('/home/aea/log/test.log','a'),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么
             'formatter': 'standard'   # 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, "log",'devops_api.log'),  #这是将普通日志写入到日志文件中的方法，
             'formatter': 'standard'
         },
         'default': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, "log",'devops_api.log'),     #日志输出文件
             'maxBytes': 1024*1024*5,                  #文件大小
@@ -210,7 +210,7 @@ LOGGING = {
         'django': {
             'handlers': ['console','file'],
             # 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
         'django.request ':{
