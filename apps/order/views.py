@@ -31,7 +31,7 @@ class KubernetesManager(APIView):
 
     def get(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            _kwargs = format_request_params(request=request,model=KubernetesModel)
             if not kwargs:
                 object_data = KubernetesModel.objects.all()
             else:
@@ -63,7 +63,7 @@ class KubernetesManager(APIView):
         :return:
         """
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesModel)
+            _kwargs = format_request_params(request=request,model=KubernetesModel)
             if not _kwargs:
                 return DataResponse(message="输入参数错误！", code=20001)
             KubernetesModel.objects.filter(**_kwargs).delete()
@@ -91,7 +91,7 @@ class KubernetesNameSpaceManager(APIView):
 
     def get(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesNameSpace)
+            _kwargs = format_request_params(request=request,model=KubernetesNameSpace)
             if not _kwargs:
                 object_data = KubernetesNameSpace.objects.all()
             else:
@@ -107,7 +107,7 @@ class KubernetesNameSpaceManager(APIView):
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
     def get(self, request, **kwargs):
-        _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
+        _kwargs = format_request_params(request=request,model=KubernetesWorkLoadServiceIngressTemplate)
         if not _kwargs:
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.all()
         else:
@@ -123,7 +123,7 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
 
     def put(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
+            _kwargs = format_request_params(request=request,model=KubernetesWorkLoadServiceIngressTemplate)
             if not _kwargs:
                 return DataResponse(message="输入参数错误！", code=20001)
             object_data = KubernetesWorkLoadServiceIngressTemplate.objects.filter(
@@ -151,7 +151,7 @@ class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
         :return:
         """
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=KubernetesWorkLoadServiceIngressTemplate)
+            _kwargs = format_request_params(request=request,model=KubernetesWorkLoadServiceIngressTemplate)
             KubernetesWorkLoadServiceIngressTemplate.objects.filter(
                 **_kwargs
             ).delete()
@@ -179,7 +179,7 @@ class DBManager(APIView):
 
     def get(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            _kwargs = format_request_params(request=request,model=DB)
             if not _kwargs:
                 object_data = DB.objects.all()
             else:
@@ -191,7 +191,7 @@ class DBManager(APIView):
 
     def put(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            _kwargs = format_request_params(request=request,model=DB)
             if not _kwargs:
                 return DataResponse(message="输入参数错误！", code=20001)
             object_data = DB.objects.filter(**_kwargs)
@@ -215,7 +215,7 @@ class DBManager(APIView):
         :return:
         """
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=DB)
+            _kwargs = format_request_params(request=request,model=DB)
             DB.objects.filter(**_kwargs).delete()
             return DataResponse(message="更新数据成功！", code=20000)
         except ParamErrorException as error:
@@ -241,7 +241,7 @@ class OrdersManager(APIView):
 
     def get(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            _kwargs = format_request_params(request=request,model=Orders)
             if not _kwargs:
                 object_data = Orders.objects.all()
             else:
@@ -253,7 +253,7 @@ class OrdersManager(APIView):
 
     def put(self, request, **kwargs):
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            _kwargs = format_request_params(request=request,model=Orders)
             if not kwargs:
                 return DataResponse(message="输入参数错误！", code=20001)
             object_data = Orders.objects.filter(**_kwargs)
@@ -276,7 +276,7 @@ class OrdersManager(APIView):
         :return:
         """
         try:
-            _kwargs = format_request_params(request=request.GET.copy(),model=Orders)
+            _kwargs = format_request_params(request=request,model=Orders)
             OrdersSerializer.objects.filter(**_kwargs).delete()
             return DataResponse(message="更新数据成功！", code=20000)
         except ParamErrorException as error:
