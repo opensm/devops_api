@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 
+# mkdir logs directory
+
+LOGGING_DIR = "logs"
+if not os.path.exists(LOGGING_DIR):
+    os.mkdir(LOGGING_DIR)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -187,16 +193,22 @@ LOGGING = {
             # 'stream': open('/home/aea/log/test.log','a'),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么
             'formatter': 'standard'   # 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错
         },
-        'file': {
+        'infofile': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, "log",'devops_api.log'),  #这是将普通日志写入到日志文件中的方法，
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api-info.log'),  #这是将普通日志写入到日志文件中的方法，
+            'formatter': 'standard'
+        },
+        'errorfile': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api-error.log'),  #这是将普通日志写入到日志文件中的方法，
             'formatter': 'standard'
         },
         'default': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, "log",'devops_api.log'),     #日志输出文件
+            'filename': os.path.join(BASE_DIR, BASE_DIR,'devops_api.log'),     #日志输出文件
             'maxBytes': 1024*1024*5,                  #文件大小
             'backupCount': 5,                         #备份份数
             'formatter':'standard',                   #使用哪种formatters日志格式
@@ -208,15 +220,15 @@ LOGGING = {
         # django 表示就是django本身默认的控制台输出，就是原本在控制台里面输出的内容，在这里的handlers里的file表示写入到上面配置的file-/home/aea/log/jwt_test.log文件里面
         # 在这里的handlers里的console表示写入到上面配置的console-/home/aea/log/test.log文件里面
         # 应用中自定义日志记录器
-        'devops_api_log': {
+        '': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'infofile','errorfile'],
             'propagate': True,
         },
         'django': {
             'handlers': ['console','file'],
             # 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.request ':{
