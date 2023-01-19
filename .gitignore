@@ -10,3 +10,4 @@ devops/__pycache__
 utils/__pycache__
 devops_api/__pycache__
 logs
+devops_api.log

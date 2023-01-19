@@ -26,14 +26,19 @@ class KubernetesClass:
         :return:
         """
         crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
-        auth_key = crypt.aesdecrypt(obj.token)
+        try:
+
+            auth_key = crypt.aesdecrypt(obj.token)
+            ca = crypt.aesdecrypt(obj.ca)
+        except Exception as error:
+            raise ContentErrorException(message="decryption failed,{}".format(error))
         if not auth_key:
             raise ParamErrorException(message='Invalid auth key')
-        ca = crypt.aesdecrypt(obj.ca)
-        if not auth_key:
-            raise ParamErrorException(message='Invalid auth key')
+        if not ca:
+            raise ParamErrorException(message='Invalid ca')
         #self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
         self.configuration.api_key = auth_key
+        print(self.configuration.api_key)
         logger.info(msg='Current API key: {}'.format(self.configuration.api_key))
         self.configuration.api_key_prefix['authorization'] = 'Bearer'
         if obj.ca:

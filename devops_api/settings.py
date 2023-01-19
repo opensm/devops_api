@@ -208,7 +208,7 @@ LOGGING = {
         'default': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, BASE_DIR,'devops_api.log'),     #日志输出文件
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api.log'),     #日志输出文件
             'maxBytes': 1024*1024*5,                  #文件大小
             'backupCount': 5,                         #备份份数
             'formatter':'standard',                   #使用哪种formatters日志格式
