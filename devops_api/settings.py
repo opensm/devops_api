@@ -226,18 +226,18 @@ LOGGING = {
             'propagate': True,
         },
         'django': {
-            'handlers': ['console','file'],
+            'handlers': ['console','infofile'],
             # 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志
             'level': 'DEBUG',
             'propagate': True,
         },
         'django.request ':{
-            'handlers': ['console','file'],
+            'handlers': ['console','infofile'],
             'level': 'WARNING',  # 配合上面的将警告log写入到另外一个文件
             'propagate': True,
         },
         'django.db.backends': {
-            'handlers': ['file'], # 指定file handler处理器，表示只写入到文件
+            'handlers': ['infofile'], # 指定file handler处理器，表示只写入到文件
             'level':'INFO',
             'propagate': True,
         },
