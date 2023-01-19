@@ -207,6 +207,12 @@ LOGGING = {
     'loggers': {  # log记录器，配置之后就会对应的输出日志
         # django 表示就是django本身默认的控制台输出，就是原本在控制台里面输出的内容，在这里的handlers里的file表示写入到上面配置的file-/home/aea/log/jwt_test.log文件里面
         # 在这里的handlers里的console表示写入到上面配置的console-/home/aea/log/test.log文件里面
+        # 应用中自定义日志记录器
+        'devops_api_log': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': True,
+        },
         'django': {
             'handlers': ['console','file'],
             # 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志
