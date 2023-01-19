@@ -91,7 +91,6 @@ class Menu(APIView):
 
 class CurrentUser(APIView):
     def get(self, request):
-        print(request.data)
         try:
             token = request.META.get('HTTP_AUTHORIZATION')
             instance = UserToken.objects.get(token=token)
