@@ -105,6 +105,8 @@ class CurrentUser(APIView):
                 'roles': "admin"
             }
             return DataResponse(data=data, message="获取用户信息成功！", code=20000)
+        except UserToken.DoesNotExist:
+            return DataResponse(message="用户登录过期，请重新登录！", code=40001)
         except User.DoesNotExist:
             return DataResponse(message="获取用户信息失败！", code=40001)
 
