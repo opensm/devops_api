@@ -1,6 +1,6 @@
 from utils.requests import format_request_params
 from utils.response import APIResponse,DataResponse
-from utils.kubernetes import KubernetesClass
+from utils.kubernetes_class import KubernetesClass
 from utils.exceptions import ParamErrorException,DataNotExistException,PermissionDeniedException,ServerErrorException,ContentErrorException
 from utils.crypt import AesCrypt
 from utils.devops_api_log import logger

@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 import kubernetes.client
 from kubernetes import client,utils
@@ -29,6 +28,8 @@ class KubernetesClass:
         try:
 
             auth_key = crypt.aesdecrypt(obj.token)
+            print(auth_key)
+            auth_key = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlMxTUFHN1ZXNWpZQ2VLU2ZwbEZQVzJ2R3NXejlpRk1CeDFScGg4eVdDTFUifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Imt1YmVybmV0ZXMtcHJveHktdG9rZW4tbXRuajgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoia3ViZXJuZXRlcy1wcm94eSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjZhMjkwZmJiLTY4NmMtNDRhZi05NmQ2LTAyNWM4M2IxNDQyYyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0Omt1YmVybmV0ZXMtcHJveHkifQ.uIPtRmfVRSy0YfenTCoUo0CdbP8tvwESJUojb_EEfVQZje95S09oYG0GZCWW30yKtMe139G_NlUTUeK-HJF7V7riMs57o1aevVFHntWznWswZ7QgcEgzWdff8_5xKkyDBhAflvhbE19StkyavMl4kSlt1M-bIlkPIl39tLTEcLWaZQUg2nZ37AItTPZLZkhdD7Zg_5HmgM7RDKngLleGbbzdG5tLrdzsLPBEO2wHZcxLukJb_LlO2U91tuJQJjiZ9B18icd04eo4ujHVPdY13mz-_u1DtmsGGgXGlcAE5Z1GJofFkverVswIXDdXg-MeBALWJdcCjJSwambLE82Y0A"
             ca = crypt.aesdecrypt(obj.ca)
         except Exception as error:
             raise ContentErrorException(message="decryption failed,{}".format(error))
@@ -36,13 +37,14 @@ class KubernetesClass:
             raise ParamErrorException(message='Invalid auth key')
         if not ca:
             raise ParamErrorException(message='Invalid ca')
-        #self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
-        self.configuration.api_key = auth_key
-        print(self.configuration.api_key)
+        self.configuration.api_key = {"authorization": "Bearer {}".format(auth_key)}
+        # self.configuration.api_key = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlMxTUFHN1ZXNWpZQ2VLU2ZwbEZQVzJ2R3NXejlpRk1CeDFScGg4eVdDTFUifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Imt1YmVybmV0ZXMtcHJveHktdG9rZW4tbXRuajgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoia3ViZXJuZXRlcy1wcm94eSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjZhMjkwZmJiLTY4NmMtNDRhZi05NmQ2LTAyNWM4M2IxNDQyYyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0Omt1YmVybmV0ZXMtcHJveHkifQ.uIPtRmfVRSy0YfenTCoUo0CdbP8tvwESJUojb_EEfVQZje95S09oYG0GZCWW30yKtMe139G_NlUTUeK-HJF7V7riMs57o1aevVFHntWznWswZ7QgcEgzWdff8_5xKkyDBhAflvhbE19StkyavMl4kSlt1M-bIlkPIl39tLTEcLWaZQUg2nZ37AItTPZLZkhdD7Zg_5HmgM7RDKngLleGbbzdG5tLrdzsLPBEO2wHZcxLukJb_LlO2U91tuJQJjiZ9B18icd04eo4ujHVPdY13mz-_u1DtmsGGgXGlcAE5Z1GJofFkverVswIXDdXg-MeBALWJdcCjJSwambLE82Y0A"
+        # print(self.configuration.api_key)
         logger.info(msg='Current API key: {}'.format(self.configuration.api_key))
-        self.configuration.api_key_prefix['authorization'] = 'Bearer'
+        # self.configuration.api_key_prefix['authorization'] = 'Bearer'
         if obj.ca:
-            self.configuration.ssl_ca_cert = ca
+            self.configuration.verify_ssl = False
+            # self.configuration.ssl_ca_cert = ca
             logger.info(msg='Current API Ca: {}'.format(self.configuration.ssl_ca_cert))
         else:
             self.configuration.ssl_verify = False
@@ -110,7 +112,7 @@ class KubernetesClass:
         if request_kwargs:
             res = self._api.list_namespace(pretty=pretty,**request_kwargs)
         else:
-            res = self._api.list_namespace(pretty=pretty)
+            res = self._api.list_namespace()
         return res
     
     def read_namespaced_resource(self,namespace,resource,name,pretty=True):
