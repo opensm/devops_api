@@ -9,6 +9,8 @@ def format_request_params(request,model):
             continue
         if key == "page":
             continue
+        if key == "sort":
+            continue
         if len(value) == 0:
             raise ParamErrorException(message="Missing parameter")
         elif len(value) == 1:
