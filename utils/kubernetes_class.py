@@ -2,7 +2,7 @@ from __future__ import print_function
 import kubernetes.client
 from kubernetes import client,utils
 # from kubernetes.client.rest import ApiException
-from apps.order.models import KubernetesModel, Orders
+from apps.order.models import KubernetesModel, Orders,KubernetesNameSpace
 from datetime import timedelta, timezone, datetime
 import time,os,yaml
 import simplejson as json
@@ -114,6 +114,23 @@ class KubernetesClass:
         else:
             res = self._api.list_namespace()
         return res
+
+    def renew_namespace_list(self,Kubernetes:KubernetesModel,**kwargs):
+        """
+        params: kwargs
+        params: Kubernetes
+        """
+        namespaces = self.list_namespace(**kwargs)
+        for namespace in namespaces.items:
+            if namespace.name.startswith('u_') or namespace.name.startswith('p_'):
+                continue
+            KubernetesNameSpace.objects.get_or_create(
+                namespace=namespace.metadata.name,
+                kubernetes=Kubernetes,
+                defaults={"name": namespace.metadata.name}
+            )
+            print(namespace.metadata.name)
+
     
     def read_namespaced_resource(self,namespace,resource,name,pretty=True):
         """
