@@ -7,6 +7,7 @@ class KubernetesModelSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class KubernetesNameSpaceSerializer(serializers.ModelSerializer):
+    kubernetes_name = serializers.CharField(source="kubernetes.name",read_only=True)
     class Meta:
         model = KubernetesNameSpace
         fields = "__all__"
