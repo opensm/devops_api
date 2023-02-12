@@ -5,6 +5,8 @@ def format_request_params(request,model):
     print(request)
     params = {}
     for key, value in request.GET.items():
+        if key == "limit":
+            continue
         if len(value) == 0:
             raise ParamErrorException(message="Missing parameter")
         elif len(value) == 1:
