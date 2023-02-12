@@ -122,8 +122,7 @@ class KubernetesClass:
         """
         namespaces = self.list_namespace(**kwargs)
         for namespace in namespaces.items:
-            print(namespace)
-            if namespace.name.startswith('u_') or namespace.name.startswith('p_'):
+            if namespace.metadata.name.startswith('u_') or namespace.metadata.name.startswith('p_'):
                 continue
             KubernetesNameSpace.objects.update_or_create(
                 namespace=namespace.metadata.name,
