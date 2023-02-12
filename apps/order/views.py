@@ -20,7 +20,7 @@ class KubernetesNamespaceRsyncController(APIView):
             namespaces=k8s.list_namespace()
             # print(namespaces.items)
             for namespace in namespaces.items:
-                print(namespace.metadata)
+                print(namespace.metadata.name)
         except KubernetesModel.DoesNotExist:
             return DataResponse(code=40001,message="Couldn't find Kubernetes message.")
         except PermissionDeniedException as exc:
