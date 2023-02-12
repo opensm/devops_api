@@ -18,8 +18,8 @@ class KubernetesNamespaceRsyncController(APIView):
             k8s = KubernetesClass()
             k8s.connect(obj=data,api_type="CoreV1Api")
             namespaces=k8s.list_namespace()
-            print(namespaces.items)
-            for namespace in namespaces:
+            # print(namespaces.items)
+            for namespace in namespaces.items:
                 print(namespace)
         except KubernetesModel.DoesNotExist:
             return DataResponse(code=40001,message="Couldn't find Kubernetes message.")
