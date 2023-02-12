@@ -25,6 +25,8 @@ class KubernetesNamespaceRsyncController(APIView):
             return DataResponse(code=exc.code,message=exc.message)
         except Exception as e:
             return DataResponse(code=20001,message="获取集群信息异常,error:{}".format(e))
+    
+
 
 class KubernetesManager(APIView):
 
@@ -101,6 +103,32 @@ class KubernetesNameSpaceManager(APIView):
             return DataResponse(data=data.data, message="获取集群命名空间信息成功！", code=20000)
         except ParamErrorException as error:
             return DataResponse(message=error.message, code=error.code)
+    
+    def delete(self, request, **kwargs):
+        try:
+            _kwargs = format_request_params(request=request,model=KubernetesNameSpace)
+            if not _kwargs:
+                raise ParamErrorException(message="parameter is required")
+            KubernetesNameSpace.objects.filter(**_kwargs).delete()
+            return DataResponse(data=[], message="删除集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
+    def put(self,request,**kwargs):
+        object_data = KubernetesNameSpace.objects.filter(id=request.data.get('id'))
+        if not object_data:
+            return DataResponse(message="获取更新数据错误", code=20002)
+        for x in object_data:
+            serializer_data = KubernetesNameSpaceSerializer(
+                    instance=x, data=request.data
+                )
+            if not serializer_data.is_valid():
+                return DataResponse(message=serializer_data.errors, code=20002)
+            else:
+                serializer_data.save()
+
+        return DataResponse(message="更新数据成功！", code=20000)
+        
 
 
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):

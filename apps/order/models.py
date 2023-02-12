@@ -14,6 +14,15 @@ class KubernetesModel(models.Model):
     class Meta:
         db_table = 't_kubernetes'
 
+class Projects(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
+
+class Permissions(models.Model):
+    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=None)
+    users = models.ForeignKey(users,verbose_name="")
+    readers = models.ForeignKey(readers,verbose_name="")
+
 
 class KubernetesNameSpace(models.Model):
     id = models.AutoField(primary_key=True)
