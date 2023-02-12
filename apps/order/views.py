@@ -17,10 +17,8 @@ class KubernetesNamespaceRsyncController(APIView):
             data = KubernetesModel.objects.get(**_kwargs)
             k8s = KubernetesClass()
             k8s.connect(obj=data,api_type="CoreV1Api")
-            namespaces=k8s.list_namespace()
-            # print(namespaces.items)
-            for namespace in namespaces.items:
-                print(namespace.metadata.name)
+            k8s.renew_namespace_list(Kubernetes=data)
+            return DataResponse(code=20000,message="Rsync success.")
         except KubernetesModel.DoesNotExist:
             return DataResponse(code=40001,message="Couldn't find Kubernetes message.")
         except PermissionDeniedException as exc:
