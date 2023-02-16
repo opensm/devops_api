@@ -25,10 +25,10 @@ class Projects(models.Model):
 
 class Permissions(models.Model):
     id = models.AutoField(primary_key=True)
-    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=models.CASCADE)
-    writers = models.ManyToManyField(User,verbose_name="写用户列表")
-    readers = models.ManyToManyField(User,verbose_name="读用户列表")
-    manager = models.ManyToManyField(User,verbose_name="项目管理")
+    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=models.CASCADE,related_name='project')
+    writers = models.ManyToManyField(User,verbose_name="写用户列表",related_name='writers')
+    readers = models.ManyToManyField(User,verbose_name="读用户列表",related_name='readers')
+    manager = models.ManyToManyField(User,verbose_name="项目管理",related_name='manager')
 
     class Meta:
         db_table = 't_project_permissions'
