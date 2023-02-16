@@ -19,12 +19,13 @@ class Projects(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
     namespaces = models.ManyToManyField(User,verbose_name="命名空间")
-    dbs = models.ManyToManyField(User,verbose_name="数据库实例")
+    dbs = models.ManyToManyField('DB',verbose_name="数据库实例")
     class Meta:
         db_table = 't_projects'
 
 class Permissions(models.Model):
-    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=None)
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=models.CASCADE)
     writers = models.ManyToManyField(User,verbose_name="写用户列表")
     readers = models.ManyToManyField(User,verbose_name="读用户列表")
     manager = models.ManyToManyField(User,verbose_name="项目管理")
