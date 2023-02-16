@@ -19,6 +19,7 @@ from apps.order.views import *
 urlpatterns = [
     path('kubernetes/auth', KubernetesManager.as_view(), name="kubernetes"),
     path('kubernetes/namespace', KubernetesNameSpaceManager.as_view(), name="namespace"),
+    path('kubernetes/template', KubernetesWorkLoadServiceIngressTemplateManager.as_view(), name="template"),
     path('kubernetes/namespace_rsync',KubernetesNamespaceRsyncController.as_view(), name="namespace_rsync"),
     path('db/auth', DBManager.as_view(), name="db"),
     path('order/info', OrdersManager.as_view(), name="order"),
