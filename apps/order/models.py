@@ -1,4 +1,5 @@
 from django.db import models
+from apps.account.models import User
 
 
 class KubernetesModel(models.Model):
@@ -17,11 +18,19 @@ class KubernetesModel(models.Model):
 class Projects(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
+    namespaces = models.ManyToManyField(User,verbose_name="命名空间")
+    dbs = models.ManyToManyField(User,verbose_name="数据库实例")
+    class Meta:
+        db_table = 't_projects'
 
 class Permissions(models.Model):
     project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=None)
-    users = models.ForeignKey(users,verbose_name="")
-    readers = models.ForeignKey(readers,verbose_name="")
+    writers = models.ManyToManyField(User,verbose_name="写用户列表")
+    readers = models.ManyToManyField(User,verbose_name="读用户列表")
+    manager = models.ManyToManyField(User,verbose_name="项目管理")
+
+    class Meta:
+        db_table = 't_project_permissions'
 
 
 class KubernetesNameSpace(models.Model):
@@ -72,6 +81,9 @@ class OrderNotice(models.Model):
     params = models.TextField(verbose_name="通知参数",null=False)
     at_useful = models.BooleanField(default=False,verbose_name="at_useful")
 
+    class Meta:
+        db_table = 't_notice'
+
 
 class Orders(models.Model):
     id = models.AutoField(primary_key=True)
@@ -100,6 +112,8 @@ class Orders(models.Model):
 __all__ = [
     'KubernetesModel',
     'KubernetesNameSpace',
+    'Projects',
+    'Permissions',
     'KubernetesWorkLoadServiceIngressTemplate',
     'DB',
     'Orders'

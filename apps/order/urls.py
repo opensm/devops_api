@@ -21,5 +21,7 @@ urlpatterns = [
     path('kubernetes/namespace', KubernetesNameSpaceManager.as_view(), name="namespace"),
     path('kubernetes/namespace_rsync',KubernetesNamespaceRsyncController.as_view(), name="namespace_rsync"),
     path('db/auth', DBManager.as_view(), name="db"),
-    path('order/info', OrdersManager.as_view(), name="manager")
+    path('order/info', OrdersManager.as_view(), name="order"),
+    path('project/info', ProjectManager.as_view(), name="project"),
+    path('PermissionManager/info', ProjectManager.as_view(), name="permission"),
 ]

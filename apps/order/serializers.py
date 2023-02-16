@@ -17,6 +17,15 @@ class KubernetesWorkLoadServiceIngressTemplateSerializer(serializers.ModelSerial
         model = KubernetesWorkLoadServiceIngressTemplate
         fields = "__all__"
 
+class ProjectsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Projects
+        fields = "__all__"
+
+class PermissionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permissions
+        fields = "__all__"
 
 class DBSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,4 +37,12 @@ class OrdersSerializer(serializers.ModelSerializer):
         model = Orders
         fields = "__all__"
 
-__all__ = ['KubernetesModelSerializer','KubernetesNameSpaceSerializer','KubernetesWorkLoadServiceIngressTemplateSerializer','DBSerializer','OrdersSerializer']
+__all__ = [
+    'KubernetesModelSerializer',
+    'KubernetesNameSpaceSerializer',
+    'KubernetesWorkLoadServiceIngressTemplateSerializer',
+    'DBSerializer',
+    'OrdersSerializer',
+    'ProjectsSerializer',
+    'PermissionsSerializer'
+    ]

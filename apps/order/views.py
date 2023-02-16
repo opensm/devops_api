@@ -87,7 +87,7 @@ class KubernetesManager(APIView):
                 serializer_data.save()
                 return DataResponse(message="更新数据成功！", code=20000)
 
-
+# 命名空间
 class KubernetesNameSpaceManager(APIView):
 
     def get(self, request, **kwargs):
@@ -128,7 +128,89 @@ class KubernetesNameSpaceManager(APIView):
                 serializer_data.save()
 
         return DataResponse(message="更新数据成功！", code=20000)
-        
+
+# 项目
+class ProjectManager(APIView):
+
+    def get(self, request, **kwargs):
+        try:
+            _kwargs = format_request_params(request=request,model=Projects)
+            if not _kwargs:
+                object_data = Projects.objects.all()
+            else:
+                object_data = Projects.objects.filter(**_kwargs)
+
+            data = ProjectsSerializer(instance=object_data, many=True)
+
+            return DataResponse(data=data.data, message="获取集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
+    def delete(self, request, **kwargs):
+        try:
+            _kwargs = format_request_params(request=request,model=Permissions)
+            if not _kwargs:
+                raise ParamErrorException(message="parameter is required")
+            Projects.objects.filter(**_kwargs).delete()
+            return DataResponse(data=[], message="删除集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
+    def put(self,request,**kwargs):
+        object_data = Projects.objects.filter(id=request.data.get('id'))
+        if not object_data:
+            return DataResponse(message="获取更新数据错误", code=20002)
+        for x in object_data:
+            serializer_data = ProjectsSerializer(
+                    instance=x, data=request.data
+                )
+            if not serializer_data.is_valid():
+                return DataResponse(message=serializer_data.errors, code=20002)
+            else:
+                serializer_data.save()
+        return DataResponse(message="更新数据成功！", code=20000)
+
+
+# 权限
+class PermissionManager(APIView):
+
+    def get(self, request, **kwargs):
+        try:
+            _kwargs = format_request_params(request=request,model=Permissions)
+            if not _kwargs:
+                object_data = Permissions.objects.all()
+            else:
+                object_data = Permissions.objects.filter(**_kwargs)
+
+            data = PermissionsSerializer(instance=object_data, many=True)
+
+            return DataResponse(data=data.data, message="获取集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
+    def delete(self, request, **kwargs):
+        try:
+            _kwargs = format_request_params(request=request,model=Permissions)
+            if not _kwargs:
+                raise ParamErrorException(message="parameter is required")
+            Permissions.objects.filter(**_kwargs).delete()
+            return DataResponse(data=[], message="删除集群命名空间信息成功！", code=20000)
+        except ParamErrorException as error:
+            return DataResponse(message=error.message, code=error.code)
+    
+    def put(self,request,**kwargs):
+        object_data = Permissions.objects.filter(id=request.data.get('id'))
+        if not object_data:
+            return DataResponse(message="获取更新数据错误", code=20002)
+        for x in object_data:
+            serializer_data = PermissionsSerializer(
+                    instance=x, data=request.data
+                )
+            if not serializer_data.is_valid():
+                return DataResponse(message=serializer_data.errors, code=20002)
+            else:
+                serializer_data.save()
+        return DataResponse(message="更新数据成功！", code=20000)
 
 
 class KubernetesWorkLoadServiceIngressTemplateManager(APIView):
@@ -331,5 +413,7 @@ __all__ = [
     'KubernetesWorkLoadServiceIngressTemplateManager',
     'DBManager',
     'OrdersManager',
-    'KubernetesNamespaceRsyncController'
+    'KubernetesNamespaceRsyncController',
+    'PermissionManager',
+    'ProjectManager'
 ]
