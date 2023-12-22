@@ -1,121 +1,92 @@
 from django.db import models
 from apps.account.models import User
-
-
-class KubernetesModel(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='集群名称', max_length=32, blank=False, null=False, default="default")
-    address = models.CharField(verbose_name='地址', max_length=32, blank=False, null=False, default="default")
-    token = models.TextField(verbose_name="认证token", blank=True)
-    regular = models.TextField(verbose_name="正则信息",null=True)
-    ca = models.TextField(verbose_name="证书",null=True)
-    debug = models.BooleanField(default=False,verbose_name="debug",null=False)
-    desc = models.TextField(verbose_name="备注", blank=True)
-
-    class Meta:
-        db_table = 't_kubernetes'
-
-class Projects(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
-    namespaces = models.ManyToManyField(User,verbose_name="命名空间")
-    dbs = models.ManyToManyField('DB',verbose_name="数据库实例")
-    class Meta:
-        db_table = 't_projects'
-
-class Permissions(models.Model):
-    id = models.AutoField(primary_key=True)
-    project = models.ForeignKey(Projects,verbose_name="所属项目",on_delete=models.CASCADE,related_name='project')
-    writers = models.ManyToManyField(User,verbose_name="写用户列表",related_name='writers')
-    readers = models.ManyToManyField(User,verbose_name="读用户列表",related_name='readers')
-    manager = models.ManyToManyField(User,verbose_name="项目管理",related_name='manager')
-
-    class Meta:
-        db_table = 't_project_permissions'
-
-
-class KubernetesNameSpace(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
-    kubernetes = models.ForeignKey(
-        verbose_name="所属Kubernetes", null=False, on_delete=models.CASCADE, to="KubernetesModel"
-    )
-    namespace = models.CharField(verbose_name='命名空间', max_length=32, blank=False, null=False, default="default")
-    desc = models.TextField(verbose_name="备注", blank=True)
-
-    class Meta:
-        db_table = 't_kubernetes_namespace'
-
-
-class KubernetesWorkLoadServiceIngressTemplate(models.Model):
-    id = models.AutoField(primary_key=True)
-    class_name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
-    class_type = models.CharField(verbose_name='类型', max_length=32, blank=False, null=False, default="default")
-    template = models.TextField(verbose_name="模板内容", null=False)
-    desc = models.TextField(verbose_name="备注", blank=True)
-
-    class Meta:
-        db_table = 't_kubernetes_template'
-
-
-class DB(models.Model):
-    db_type = models.CharField(
-        verbose_name="所属数据库类型",
-        choices=(
-            ("mysql", "mysql"),
-            ("mongodb", "mongodb"),
-            ("redis", "redis")
-        ),
-        max_length=10, default="mysql"
-    )
-    address = models.CharField(verbose_name="链接地址：IP:Port", max_length=50, default="127.0.0.1")
-    username = models.CharField(verbose_name="用户", max_length=10, default="admin", blank=True)
-    password = models.CharField(verbose_name="密码", max_length=200, default="admin", blank=True)
-    uri = models.CharField(verbose_name="uri连接地址", max_length=200, default="mongo://127.0.0.1:27017")
-    desc = models.TextField(verbose_name="备注")
-
-    class Meta:
-        db_table = 't_db'
-
-class OrderNotice(models.Model):
-    notice_type = models.CharField(verbose_name="通知类型",max_length=10,choices=(("wechat","企业微信"),("dingtalk","钉钉"),("email","邮件")),default='weichat')
-    params = models.TextField(verbose_name="通知参数",null=False)
-    at_useful = models.BooleanField(default=False,verbose_name="at_useful")
-
-    class Meta:
-        db_table = 't_notice'
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 
 class Orders(models.Model):
     id = models.AutoField(primary_key=True)
-    order_time = models.CharField(verbose_name='类型名称', max_length=32, blank=False, null=False, default="default")
-    kubernetes = models.ForeignKey(
-        verbose_name="所属Kubernetes", null=True, on_delete=models.CASCADE, to="KubernetesModel"
+    jira_order = models.CharField(
+        verbose_name='jira审核订单', max_length=32, blank=False, null=False,
+        default="default"
     )
-    kubernetes_content = models.TextField(
-        verbose_name="kubernetes内容", null=False
-    )
-    db = models.ForeignKey(
-        verbose_name="所属db", null=True, on_delete=models.CASCADE, to="DB",blank=True
-    )
-    db_content = models.TextField(verbose_name="模板内容", null=False)
+    order_time = models.DateTimeField(verbose_name='类型名称', blank=False, null=False)
     create_time = models.DateTimeField(auto_now_add=True)
-    finish_time = models.DateTimeField(auto_created=True)
-    status = models.IntegerField(verbose_name="任务状态", blank=False, null=False, default=0)
-    notice = models.ManyToManyField(verbose_name="通知类型",to="OrderNotice")
-    old_orders = models.ManyToManyField(verbose_name="回退工单",to="Orders")
-    desc = models.TextField(verbose_name="备注", blank=True)
+    finish_time = models.DateTimeField(auto_created=True, null=True, blank=True)
+    status = models.IntegerField(
+        verbose_name="执行状态",
+        choices=((0, "还未审批"), (1, "审批中"), (2, "审批通过"), (3, "审批拒绝"),
+                 (4, "审批未执行"), (5, "执行中"), (6, "执行完成"), (7, "执行失败"), (8, "任务回退中"),
+                 (9, "任务回退失败"), (10, "任务取消")),
+        default=0
+    )
+    notice = models.ManyToManyField(verbose_name="通知类型", to="config.Notice")
+    re_orders = models.ForeignKey(verbose_name="回退工单", to="Orders", on_delete=models.CASCADE, null=True, blank=True)
+    desc = models.TextField(verbose_name="发布说明", blank=True)
+    order_user = models.ForeignKey(User, blank=True, on_delete=models.CASCADE, null=True, verbose_name="工单提交人")
 
     class Meta:
         db_table = 't_orders'
 
 
+class SubOrders(models.Model):
+    params = models.TextField(
+        verbose_name="执行参数",
+        null=True,
+        blank=True
+    )
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE, related_name='suborders', null=True, blank=True)
+    status = models.IntegerField(
+        verbose_name="执行状态",
+        choices=((0, "还未执行"), (1, "执行中"), (2, "执行成功"), (3, "执行失败")),
+        default=0
+    )
+    content_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE)  # 指向ContentType这个模型
+    service_env = models.ForeignKey(
+        to='config.ServiceEnvironment',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="部署服务"
+    )
+    images = models.ForeignKey(
+        to='config.Products',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="部署镜像"
+    )
+    object_id = models.PositiveIntegerField()  # object_id为一个整数，存储了实例id
+    content_object = GenericForeignKey(
+        'content_type',
+        'object_id'
+    )
+    go_over = models.BooleanField(verbose_name="错误仍执行", default=False)
+    create_time = models.DateTimeField(auto_now_add=True)
+    finish_time = models.DateTimeField(auto_created=True, null=True, blank=True)
+    response_user = models.ForeignKey(User, blank=True, on_delete=models.CASCADE, null=True, verbose_name="责任人员")
+
+    class Meta:
+        db_table = 't_suborders'
+
+
+class OrderLogs(models.Model):
+    order = models.ForeignKey(Orders, on_delete=models.CASCADE, verbose_name="订单", related_name='order_logs')
+    sub_order = models.ForeignKey(SubOrders, on_delete=models.CASCADE, verbose_name="子订单")
+    status = models.IntegerField(
+        verbose_name="执行状态",
+        choices=((0, "还未执行"), (1, "执行中"), (2, "执行成功"), (3, "执行失败")),
+        default=0
+    )
+    logs = models.TextField(verbose_name="记录日志")
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 't_order_logs'
+
+
 __all__ = [
-    'KubernetesModel',
-    'KubernetesNameSpace',
-    'Projects',
-    'Permissions',
-    'KubernetesWorkLoadServiceIngressTemplate',
-    'DB',
-    'Orders'
-    ]
+    'Orders',
+    'SubOrders',
+    'OrderLogs'
+]

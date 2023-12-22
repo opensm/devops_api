@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 
-# mkdir logs directory
-
 LOGGING_DIR = "logs"
 if not os.path.exists(LOGGING_DIR):
     os.mkdir(LOGGING_DIR)
@@ -43,9 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
     'corsheaders',  # 支持跨域
     'rest_framework',
     'apps.account',
+    'apps.config',
     'apps.order'
 ]
 
@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'utils.middleware.authMiddleware.AuthCheckMixin',
 ]
 
 ROOT_URLCONF = 'devops_api.urls'
@@ -99,6 +100,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+        }
     }
 }
 
@@ -120,6 +124,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = (
+    'utils.core.auth.CustomBackend',
+)
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -130,6 +138,8 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 
 USE_TZ = True
+
+LANGUAGE_CODE = 'zh-Hans'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -172,7 +182,7 @@ CORS_ALLOW_HEADERS = (
 # 支持跨域 ----
 
 
-#下面就是logging的配置
+# 下面就是logging的配置
 LOGGING = {
     'version': 1,  # 指明dictConnfig的版本，目前就只有一个版本
     'disable_existing_loggers': False,  # 表示是否禁用所有的已经存在的日志配置
@@ -185,33 +195,34 @@ LOGGING = {
         },
     },
     # handlers：用来定义具体处理日志的方式，可以定义多种，"default"就是默认方式，"console"就是打印到控制台方式。file是写入到文件的方式，注意使用的class不同
-    'handlers': { # 处理器，在这里定义了两个个处理器INFO
+    'handlers': {  # 处理器，在这里定义了两个个处理器INFO
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'stream': 'ext://sys.stdout',   # 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver >> /home/aea/log/test.log
+            'stream': 'ext://sys.stdout',
+            # 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver >> /home/aea/log/test.log
             # 'stream': open('/home/aea/log/test.log','a'),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么
-            'formatter': 'standard'   # 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错
+            'formatter': 'standard'  # 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错
         },
         'infofile': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api-info.log'),  #这是将普通日志写入到日志文件中的方法，
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR, 'devops_api-info.log'),  # 这是将普通日志写入到日志文件中的方法，
             'formatter': 'standard'
         },
         'errorfile': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api-error.log'),  #这是将普通日志写入到日志文件中的方法，
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR, 'devops_api-error.log'),  # 这是将普通日志写入到日志文件中的方法，
             'formatter': 'standard'
         },
         'default': {
-            'level':'INFO',
-            'class':'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, LOGGING_DIR,'devops_api.log'),     #日志输出文件
-            'maxBytes': 1024*1024*5,                  #文件大小
-            'backupCount': 5,                         #备份份数
-            'formatter':'standard',                   #使用哪种formatters日志格式
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, LOGGING_DIR, 'devops_api.log'),  # 日志输出文件
+            'maxBytes': 1024 * 1024 * 5,  # 文件大小
+            'backupCount': 5,  # 备份份数
+            'formatter': 'standard',  # 使用哪种formatters日志格式
         },
         # 上面两种写入日志的方法是有区别的，前者是将控制台下输出的内容全部写入到文件中，这样做的好处就是我们在views代码中的所有print也会写在对应的位置
         # 第二种方法就是将系统内定的内容写入到文件，具体就是请求的地址、错误信息等，小伙伴也可以都使用一下然后查看两个文件的异同。
@@ -222,24 +233,50 @@ LOGGING = {
         # 应用中自定义日志记录器
         '': {
             'level': 'DEBUG',
-            'handlers': ['console', 'infofile','errorfile'],
+            'handlers': ['console', 'infofile', 'errorfile'],
             'propagate': True,
         },
         'django': {
-            'handlers': ['console','infofile'],
+            'handlers': ['console', 'infofile'],
             # 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志
             'level': 'DEBUG',
             'propagate': True,
         },
-        'django.request ':{
-            'handlers': ['console','infofile'],
+        'django.request ': {
+            'handlers': ['console', 'infofile'],
             'level': 'WARNING',  # 配合上面的将警告log写入到另外一个文件
             'propagate': True,
         },
         'django.db.backends': {
-            'handlers': ['infofile'], # 指定file handler处理器，表示只写入到文件
-            'level':'INFO',
+            'handlers': ['infofile'],  # 指定file handler处理器，表示只写入到文件
+            'level': 'INFO',
             'propagate': True,
         },
     },
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'utils.core.pagination.WritePageNumberPagination',
+    'PAGE_SIZE': 100,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'EXCEPTION_HANDLER': 'utils.exceptions.rewrite_exception_handler',
+    'DEFAULT_RENDERER_CLASSES': (
+        'utils.response.YSQResponse',
+    ),
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "SIGNING_KEY": SECRET_KEY,
+    "UPDATE_LAST_LOGIN": True
+}
+# JWT_AUTH = {
+#     # token有效期
+#     'JWT_EXPIRATION_DELTA': timedelta(days=1),
+#     # token刷新后的有效时间
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+# }

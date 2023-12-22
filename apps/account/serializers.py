@@ -1,71 +1,73 @@
-from abc import ABC
-import datetime
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from utils.crypt import AesCrypt
-from devops_api.settings import SALT_KEY, SECRET_KEY
-from django.contrib import auth
+from rest_framework_simplejwt.tokens import Token
+from django.utils.translation import gettext_lazy as _
 from apps.account.models import *
-from django.utils import timezone as datetime
-import time
-import hashlib
-from utils.exceptions import *
-from rest_framework import status
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, AuthUser
+from rest_framework_simplejwt.exceptions import *
+from utils.core.rsa_crypt import generator
+from utils.devops_api_log import logger
+from apps.config.serializers import ProjectsSerializer
 
 
-class SignInSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        allow_blank=False,
-        allow_null=False,
-        error_messages={
-            "required": "缺少用户名字段."
-        }
-    )
-    password = serializers.CharField(
-        allow_null=False,
-        allow_blank=False,
-        error_messages={
-            "required": "缺少密码字段.",
-            "min_length": "密码太短，至少8个字符."
-        }
-    )
-    ldap = serializers.BooleanField(
-        allow_null=False,
-        default=False,
-        error_messages={
-            "required": "缺少LDAP字段."
-        }
-    )
-    crypt = AesCrypt(model='ECB', iv='', encode_='utf-8', key=SALT_KEY)
+class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
 
-    def validate(self, attrs):
+    def get_token(self, user: AuthUser) -> Token:
+        token = super().get_token(user)
+        token['username'] = user.username
+        token['email'] = user.email
+        token['mobile'] = user.mobile
+        token['name'] = user.name
+        token['is_superuser'] = user.is_superuser
+        token['roles'] = self.get_user_roles(user=user)
+        return token
+
+    @classmethod
+    def get_user_roles(cls, user: AuthUser):
+        if user.is_superuser or user.roles.manager:
+            return ['admin']
+        elif user.roles.manager:
+            return ['manager']
+        else:
+            for per in user.roles.permission.all():
+                if per.manager:
+                    return ['project-manager']
+                if per.app_permissions:
+                    return ['project-approve']
+            return ['project-user']
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
         """
-        :param attrs:
-        :return:
+        留空用于ldap接入
         """
-        if attrs['ldap'] and not GlobalLdapConfiguration.objects.all():
-            raise serializers.ValidationError(detail="Login failed,Ldap user not exist!", code="auth")
-        try:
-            attrs['password'] = self.crypt.aesdecrypt(attrs['password'])
-            user_obj = auth.authenticate(**attrs)
-            if not user_obj:
-                raise serializers.ValidationError(detail="Login failed,user or password is not correct!{}".format(attrs), code="auth")
-            User.objects.filter(**attrs).update(last_login=datetime.now())
-        except ContentErrorException as exc:
-            raise serializers.ValidationError(message=exc.message,code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except serializers.ValidationError as err:
-            raise serializers.ValidationError(detail=err.detail, code=status.HTTP_401_UNAUTHORIZED)
-        except User.DoesNotExist:
-            raise serializers.ValidationError(detail="User not exist!", code=status.HTTP_401_UNAUTHORIZED)        
-        return attrs
+        from utils.core.rsa_crypt import secret_data
+        attrs['password'] = generator.decrypt_data(data=attrs['password'])
+        logger.info("解密后数据：{}".format(attrs))
+        data = dict()
+        print("留空用于ldap接入")
+        print(attrs)
+        if attrs:
+            data['data'] = super().validate(attrs)
+        data['public_key'] = secret_data[1]
+        data['message'] = "登录成功！"
+        data['code'] = 20000
+        return data
 
-    def validated_username(self, attrs):
-        for key, value in attrs.items():
-            attrs[key] = self.crypt.decrypt_text(value)
-        if not User.objects.filter(
-                username=attrs
-        ).exists():
-            raise serializers.ValidationError(detail="Login failed,User not exist!", code="auth")
-        return attrs
+
+class PermissionsSerializer(serializers.ModelSerializer):
+    rw_project = serializers.CharField(source='project.name', read_only=True)
+
+    class Meta:
+        model = Permissions
+        fields = "__all__"
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    permission_child = PermissionsSerializer(read_only=True, source='permission', many=True)
+
+    class Meta:
+        model = Role
+        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -74,43 +76,73 @@ class UserSerializer(serializers.ModelSerializer):
         # fields = "__all__"
         exclude = ['password']
 
+    def create(self, validated_data):
+        """
+        :param validated_data:
+        :return:
+        """
+        from django.contrib.auth.hashers import make_password
+        validated_data['password'] = make_password("12345678")
+        instance = super().create(validated_data)
+        return instance
+
+
+class UserResetPasswordSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(style={'input_type': 'password'})
+
+    class Meta:
+        model = User
+        fields = ('password',)
+
+    def update(self
+               , instance, attrs):
+        attrs['password'] = make_password(attrs['password'])
+        instance.password = attrs['password']
+        instance.save()
+        return instance
+
+
+class AdminSetPasswordSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(style={'input_type': 'password'})
+
+    class Meta:
+        model = User
+        fields = ['password', ]
+        # exclude = ['password']
+
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['password'] = generator.decrypt_data(data=attrs['password'])
+        return attrs
+
+    def update(self, instance, validated_data):
+        print(validated_data['password'].decode('utf8'))
+        instance.password = make_password(validated_data['password'].decode('utf8'))
+        instance.save()
+        return instance
+
 
 class GlobalLdapConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalLdapConfiguration
-        fields = "__all__"
-        # exclude = ['password']
+        # fields = "__all__"
+        exclude = ['ldap_bindpass']
 
-class UserTokenSerializer(serializers.ModelSerializer):
+
+class GlobalLdapConfigurationPasswordSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserToken
-        fields = "__all__"
-
-    def make_token(self, username):
-        """
-        :param username:
-        :return:
-        """
-        md5 = hashlib.md5(
-            "{0}{1}{2}".format(username, str(time.time()), SECRET_KEY).encode("utf8")
-        )
-        return md5.hexdigest()
-
-    def validate(self, attrs):
-        attrs['token'] = self.make_token(username=attrs['username'])
-        attrs['expiration_time'] = datetime.now() + datetime.timedelta(minutes=+60)
-        attrs['update_date'] = datetime.now()
-        return attrs
-
-    def create(self, validated_data):
-        UserToken.objects.filter(expiration_time__lte=datetime.now()).delete()
-        obj = UserToken.objects.create(**validated_data)
-        return obj
+        model = GlobalLdapConfiguration
+        fields = ['ldap_bindpass', 'id']
+        read_only_fields = ['id']
 
 
 __all__ = [
-    "SignInSerializer",
-    "UserTokenSerializer",
+    "RoleSerializer",
     "UserSerializer",
-    "GlobalLdapConfigurationSerializer"
+    "GlobalLdapConfigurationSerializer",
+    "UserTokenObtainPairSerializer",
+    "PermissionsSerializer",
+    "GlobalLdapConfigurationPasswordSerializer",
+    "UserResetPasswordSerializer",
+    "AdminSetPasswordSerializer"
 ]
