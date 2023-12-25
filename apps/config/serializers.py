@@ -22,12 +22,17 @@ class EnvironmentSerializer(serializers.ModelSerializer):
 
 
 class KubernetesModelSerializer(serializers.ModelSerializer):
+    kubeconfig = serializers.CharField(write_only=True)
+
     class Meta:
         model = KubernetesModel
         fields = "__all__"
 
 
 class SSHKeySerializer(serializers.ModelSerializer):
+    ssh_password = serializers.CharField(write_only=True)
+    ssh_public_key = serializers.CharField(write_only=True)
+
     class Meta:
         model = SSHKey
         fields = "__all__"

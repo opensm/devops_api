@@ -9,3 +9,4 @@ cerberus
 pymysql
 django-cors-headers
 djangorestframework-simplejwt
+pymongo
