@@ -8,8 +8,12 @@ apps/config/__pycache__
 apps/config/migrations
 apps/order/__pycache__
 apps/order/migrations
+apps/jira/__pycache__
+apps/jira/migrations
 devops/__pycache__
 utils/__pycache__
 devops_api/__pycache__
 logs
 devops_api.log
+qodana.yaml
+db.sqlite3

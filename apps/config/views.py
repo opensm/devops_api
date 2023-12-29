@@ -22,6 +22,17 @@ class NoticeUpdateView(RetrieveUpdateDestroyAPIView):
     serializer_class = NoticeSerializer
     model = Notice
 
+
+class EnvironmentVariableManagerView(ListCreateAPIView):
+    serializer_class = EnvironmentVariableSerializer
+    model = EnvironmentVariable
+
+
+class EnvironmentVariableUpdateView(RetrieveUpdateDestroyAPIView):
+    serializer_class = EnvironmentVariableSerializer
+    model = EnvironmentVariable
+
+
 class EnvironmentManagerView(ListCreateAPIView):
     serializer_class = EnvironmentSerializer
     model = Environment
@@ -162,7 +173,19 @@ class NaCOSUpdateView(RetrieveUpdateDestroyAPIView):
     model = NaCOS
 
 
+class JenkinsManagerView(ListCreateAPIView):
+    serializer_class = JenkinsSerializer
+    model = Jenkins
+
+
+class JenkinsUpdateView(RetrieveUpdateDestroyAPIView):
+    serializer_class = JenkinsSerializer
+    model = Jenkins
+
+
 __all__ = [
+    'JenkinsManagerView',
+    'JenkinsUpdateView',
     'ProjectManagerView',
     'ProjectUpdateView',
     'EnvironmentManagerView',
@@ -194,5 +217,7 @@ __all__ = [
     'NaCOSManagerView',
     'NaCOSUpdateView',
     'NoticeManagerView',
-    'NoticeUpdateView'
+    'NoticeUpdateView',
+    'EnvironmentVariableUpdateView',
+    'EnvironmentVariableManagerView'
 ]

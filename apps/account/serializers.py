@@ -94,8 +94,12 @@ class UserResetPasswordSerializer(serializers.ModelSerializer):
         model = User
         fields = ('password',)
 
-    def update(self
-               , instance, attrs):
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['password'] = generator.decrypt_data(data=attrs['password'])
+        return attrs
+
+    def update(self, instance, attrs):
         attrs['password'] = make_password(attrs['password'])
         instance.password = attrs['password']
         instance.save()

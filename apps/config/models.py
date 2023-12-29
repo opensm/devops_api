@@ -1,5 +1,7 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.fields import GenericRelation
+from utils.core.fields import AESCharField
+from apps.jira.models import JiraProjectVersion
 
 
 class Projects(models.Model):
@@ -39,8 +41,8 @@ class Environment(models.Model):
 class KubernetesModel(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='集群名称', max_length=32, blank=False, null=False, default="default")
-    kubeconfig = models.CharField(
-        verbose_name='配置文件', max_length=500, blank=False, null=False, default="/root/.kube/config"
+    kubeconfig = AESCharField(
+        verbose_name='配置文件', max_length=10220, blank=False, null=False, default="default"
     )
     regular = models.TextField(verbose_name="正则信息", null=True)
     debug = models.BooleanField(default=False, verbose_name="debug", null=False)
@@ -55,8 +57,8 @@ class SSHKey(models.Model):
     ssh_name = models.CharField(max_length=50, default="def", null=False, verbose_name="ssh名称")
     ssh_type = models.CharField(max_length=10, default="password", verbose_name="认证方式")
     ssh_username = models.CharField(max_length=50, default="default", verbose_name="用户")
-    ssh_password = models.CharField(max_length=200, default="default", verbose_name="密码", null=True, blank=True)
-    ssh_public_key = models.TextField(verbose_name="SSH公钥", null=True, blank=True)
+    ssh_password = AESCharField(max_length=200, default="default", verbose_name="密码", null=True, blank=True)
+    ssh_public_key = AESCharField(verbose_name="SSH公钥", null=True, blank=True, max_length=2000)
 
     class Meta:
         db_table = 't_sshkeys'
@@ -75,14 +77,12 @@ class ServiceConfig(models.Model):
 
 
 class Services(models.Model):
-    service_name = models.CharField(max_length=50, verbose_name="服务名称", default="default")
+    service_name = models.CharField(max_length=50, verbose_name="服务名称", default="default", unique=True)
     service_ports_enable = models.BooleanField(verbose_name="端口启用", default=False)
     service_ports = models.JSONField(verbose_name="端口列表", default=dict)
-    service_config = models.ManyToManyField(ServiceConfig, verbose_name="默认配置文件", default="default")
+    service_config = models.ManyToManyField(ServiceConfig, verbose_name="默认配置文件", default="default", blank=True)
     service_git = models.CharField(verbose_name="代码仓库地址", max_length=200, default="default")
     service_compile = models.CharField(verbose_name="默认编译命令", max_length=200, default="maven install")
-    service_environment_enable = models.BooleanField(verbose_name="环境变量启用", default=False)
-    service_environment = models.JSONField(verbose_name="默认环境变量列表")
     service_healthy_enable = models.BooleanField(verbose_name="监控启用", default=False)
     service_healthy_type = models.CharField(verbose_name="健康检查类型", max_length=200, default="tcp")
     service_readiness = models.JSONField(verbose_name="就绪探针")
@@ -108,11 +108,11 @@ class ServiceResource(models.Model):
     class Meta:
         db_table = 't_services_resource'
         # db_table_comment = "服务资源配置"
+        unique_together = (("request_cpu", "request_memory", "limit_cpu", "limit_memory"),)
 
 
 class KubernetesEnvironmentConfiguration(models.Model):
     kubernetes_pull_secret = models.CharField(max_length=100, default="default", verbose_name="Harbor配置")
-    kubernetes_replica_count = models.IntegerField(null=False, blank=False, default=1, verbose_name="副本数")
     kubernetes_auth = models.ForeignKey(
         KubernetesModel, on_delete=models.CASCADE, default=0, null=True, blank=True, verbose_name="关联k8s认证信息"
     )
@@ -121,16 +121,28 @@ class KubernetesEnvironmentConfiguration(models.Model):
     class Meta:
         db_table = 't_kubernetes_environment_configuration'
         # db_table_comment = "Kubernetes环境配置表"
+        unique_together = (("kubernetes_pull_secret", "kubernetes_auth", "kubernetes_namespace"),)
 
 
 class DockerEnvironmentConfiguration(models.Model):
-    docker_replica_count = models.IntegerField(null=False, blank=False, default=0, verbose_name="docker副本数")
     docker_instances = models.TextField(null=False, blank=False, default=0, verbose_name="docker部署所在主机")
     docker_ssh = models.ForeignKey(SSHKey, null=True, blank=True, verbose_name="ssh所属的KEY", on_delete=models.CASCADE)
 
     class Meta:
         db_table = 't_docker_environment_config'
         # db_table_comment = "Docker环境配置"
+        unique_together = (("docker_instances", "docker_ssh"),)
+
+
+class EnvironmentVariable(models.Model):
+    config_key = models.CharField(verbose_name="环境变量Key", max_length=50, default="default")
+    config_value = AESCharField(verbose_name="环境变量value", max_length=200, default="default")
+    config_type = models.CharField(verbose_name="环境变量type", max_length=50, default="default")
+
+    class Meta:
+        db_table = 't_environment_variable'
+        # db_table_comment = '环境变量表'
+        unique_together = (("config_key", "config_value"),)
 
 
 class ServiceEnvironment(models.Model):
@@ -138,9 +150,13 @@ class ServiceEnvironment(models.Model):
     service = models.ForeignKey(
         Services, on_delete=models.CASCADE, default=0, verbose_name="关联服务", null=False, blank=False
     )
+    replica_count = models.IntegerField(null=False, blank=False, default=1, verbose_name="副本数")
     resource = models.ForeignKey(ServiceResource, on_delete=models.CASCADE, null=True, blank=True, verbose_name="资源")
     service_config = models.ManyToManyField(
-        ServiceConfig, verbose_name="配置文件", default="default"
+        ServiceConfig, verbose_name="配置文件", default="default", blank=True
+    )
+    environment_variable = models.ManyToManyField(
+        'EnvironmentVariable', verbose_name="环境变量", default="default", blank=True
     )
     kubernetes_enable = models.BooleanField(null=False, blank=False, default=True, verbose_name="是否部署在k8s")
     kubernetes_environment_config = models.ForeignKey(
@@ -157,6 +173,7 @@ class ServiceEnvironment(models.Model):
     class Meta:
         db_table = 't_service_environment'
         # db_table_comment = "helm仓库配置表"
+        unique_together = (("project", "environment", "service"),)
 
 
 # helm仓库配置表
@@ -188,6 +205,7 @@ class KubernetesHelmChartModel(models.Model):
     class Meta:
         db_table = 't_kubernetes_helm'
         # db_table_comment = 'helm配置信息表'
+        unique_together = (("helm_repo_chart", "helm_repo"),)
 
 
 # 制品表
@@ -196,6 +214,14 @@ class Products(models.Model):
         ServiceEnvironment,
         verbose_name="部署信息",
         blank=True
+    )
+    jira_version = models.ForeignKey(
+        JiraProjectVersion,
+        blank=True,
+        null=True,
+        verbose_name='所属版本',
+        related_name="image_related",
+        on_delete=models.CASCADE
     )
     images = models.CharField(verbose_name="镜像地址", max_length=200, null=False, blank=False, default="images")
     status = models.BooleanField(verbose_name="是否有效", null=False, default=True)
@@ -208,6 +234,7 @@ class Products(models.Model):
     class Meta:
         db_table = 't_products'
         # db_table_comment = '制品表'
+        unique_together = (("jira_version", "images"),)
 
 
 class DB(models.Model):
@@ -224,15 +251,24 @@ class DB(models.Model):
     environment = models.ForeignKey(
         Environment, null=False, blank=False, on_delete=models.CASCADE, verbose_name="所属环境"
     )
-    address = models.CharField(verbose_name="链接地址：IP:Port", max_length=50, default="127.0.0.1")
+    address = AESCharField(verbose_name="链接地址：IP:Port", max_length=50, default="127.0.0.1")
     username = models.CharField(verbose_name="用户", max_length=10, default="admin", blank=True)
-    password = models.CharField(verbose_name="密码", max_length=200, default="admin", blank=True)
+    password = AESCharField(verbose_name="密码", max_length=200, default="admin", blank=True)
     uri = models.CharField(verbose_name="uri连接地址", max_length=200, default="mongo://127.0.0.1:27017")
     sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
     desc = models.TextField(verbose_name="备注")
 
     class Meta:
         db_table = 't_db'
+        unique_together = (("address", "username"),)
+
+
+class Jenkins(models.Model):
+    name = models.CharField(max_length=50, verbose_name="名称", default="default")
+    address = AESCharField(verbose_name="链接地址：IP:Port", max_length=50, default="127.0.0.1", unique=True)
+
+    class Meta:
+        db_table = 't_jenkins'
 
 
 class NaCOS(models.Model):
@@ -243,11 +279,15 @@ class NaCOS(models.Model):
             ("grpc", "grpc")
         ), )
     username = models.CharField(max_length=50, verbose_name="账号", default="default")
-    password = models.CharField(max_length=100, verbose_name="密码", default="default")
+    password = AESCharField(max_length=100, verbose_name="密码", default="default")
     environment = models.ForeignKey(
         Environment, null=False, blank=False, on_delete=models.CASCADE, verbose_name="所属环境"
     )
     sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
+
+    class Meta:
+        db_table = 't_nacos'
+        unique_together = (("address", "username"),)
 
 
 class Notice(models.Model):
@@ -256,7 +296,7 @@ class Notice(models.Model):
         choices=(("wechat", "企业微信"), ("dingtalk", "钉钉"), ("email", "邮件")),
         default='wechat'
     )
-    params = models.TextField(verbose_name="通知参数", null=False)
+    params = AESCharField(verbose_name="通知参数", null=False, max_length=200, unique=True)
 
     class Meta:
         db_table = 't_notice'
@@ -280,5 +320,7 @@ __all__ = [
     'Products',
     'GitCommitLog',
     'NaCOS',
-    'Notice'
+    'Notice',
+    'EnvironmentVariable',
+    'Jenkins'
 ]

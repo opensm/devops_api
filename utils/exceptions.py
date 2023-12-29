@@ -132,9 +132,15 @@ def rewrite_exception_handler(exc, context):
         result_data['message'] = "登陆失败！"
         return Response(status=200, data=result_data)
     if isinstance(exc, ValidationError):
+        code = exc.get_codes()
+        message = str()
+        for key, value in code.items():
+            for x in value:
+                message = "{}{}".format(message, _(x))
         logger.error('验证错误：{}'.format(exc))
-        result_data['code'] = 50003
-        result_data['message'] = "系统内部错误，请联系管理员查看！"
+        result_data['code'] = 40000
+        result_data['message'] = "提交信息错误！{}".format(message)
+
         return Response(status=200, data=result_data)
     if isinstance(exc, AssertionError):
         logger.error('系统内部错误：{}'.format(exc))

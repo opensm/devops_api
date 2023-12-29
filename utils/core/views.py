@@ -162,5 +162,5 @@ class RetrieveUpdateDestroyAPIView(
 __all__ = [
     'CreateAPIView', 'ListCreateAPIView', 'ListAPIView',
     'RetrieveUpdateAPIView', 'RetrieveUpdateDestroyAPIView',
-    'RetrieveDestroyAPIView', 'UpdateAPIView', 'RGenericAPIView'
+    'RetrieveDestroyAPIView', 'UpdateAPIView', 'RGenericAPIView', 'RetrieveAPIView'
 ]

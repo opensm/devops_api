@@ -50,7 +50,7 @@ class YSQResponse(JSONRenderer):
                 accepted_media_type=accepted_media_type,
                 renderer_context=renderer_context
             )
-        if not isinstance(data,dict):
+        if not isinstance(data, dict):
             logging.warning("收到得数据不是dict：{}".format(data))
             renderer_context['response'].status_code = 200
 

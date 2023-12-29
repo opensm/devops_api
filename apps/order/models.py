@@ -2,6 +2,37 @@ from django.db import models
 from apps.account.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from apps.config.models import Jenkins, ServiceEnvironment
+
+
+class JenkinsOrders(models.Model):
+    jenkins = models.ForeignKey(Jenkins, on_delete=models.CASCADE, verbose_name="所属jenkins")
+    service_env = models.ForeignKey(ServiceEnvironment, on_delete=models.CASCADE, verbose_name="所属环境配置")
+    jenkins_order_id = models.IntegerField(verbose_name='jenkinsid', default=0, null=True, blank=True)
+    jenkins_queue_id = models.CharField(verbose_name='队列ID', default=0, null=True, blank=True, max_length=8)
+    status = models.IntegerField(
+        verbose_name='status',
+        default=0,
+        null=True,
+        blank=True,
+        choices=(
+            (0, "未执行"),
+            (1, "执行中"),
+            (2, "执行完成"),
+            (3, "执行失败"),
+            (4, "取消"),
+            (5, "未知")
+        ),
+
+    )
+    datetime = models.DateTimeField(verbose_name='运行时间', auto_now=True, null=True, blank=True)
+    order_user = models.ForeignKey(User, related_name='order_user', on_delete=models.CASCADE)
+    duration = models.IntegerField(verbose_name="耗时", default=0, null=True, blank=True)
+    order_time = models.DateTimeField(verbose_name="执行时间", null=True, blank=True)
+    output = models.TextField(verbose_name="输出", null=True, blank=True)
+
+    class Meta:
+        db_table = 't_jenkins_orders'
 
 
 class Orders(models.Model):
@@ -92,5 +123,6 @@ class OrderLogs(models.Model):
 __all__ = [
     'Orders',
     'SubOrders',
-    'OrderLogs'
+    'OrderLogs',
+    'JenkinsOrders'
 ]

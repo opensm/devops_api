@@ -1,7 +1,80 @@
 from rest_framework import serializers
-from apps.order.models import *
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
+from jenkins import JenkinsException, Jenkins
+from utils.devops_api_log import logger
+from apps.order.models import *
+from apps.config.serializers import ServiceEnvironmentSerializer
+from apps.account.serializers import UserSerializer
+from apps.config.models import Jenkins as jenkins_models
+
+
+def get_next_build_number(jks: Jenkins):
+    """
+    :return: number
+    """
+    from django.db.models import Max
+    print(jks)
+    jk = Jenkins(
+        jks.address,
+        username='yaoshaoqiang',
+        password='w9vM7BQoED6fg.uheO'
+    )
+    model_id = JenkinsOrders.objects.all().aggregate(Max('jenkins_order_id'))
+    jk_data = jk.get_job_info(jks.name)
+    jk_next_id = int(jk_data['nextBuildNumber'])
+    model_next_id = int(model_id['jenkins_order_id__max']) + 1
+    if jk_next_id > model_next_id:
+        return jk_next_id
+    else:
+        return model_next_id
+
+
+class JenkinsLogField(serializers.Field):
+    def get_attribute(self, instance):
+        return instance
+
+    def to_representation(self, value: JenkinsOrders):
+        # jks = Jenkins(
+        #     value.jenkins.address,
+        #     username='yaoshaoqiang',
+        #     password='w9vM7BQoED6fg.uheO'
+        # )
+        try:
+            logger.info('获取：{}，日志'.format(value.jenkins_order_id))
+            # data = jks.get_build_console_output(
+            #     name=value.jenkins.name,
+            #     number=value.jenkins_order_id
+            # )
+            logger.info("获取到的Jenkins:{}".format(value.output))
+            return "<div>{}</div>".format(value.output.replace('\n', '</br>'))
+        except Exception as e:
+            logger.error(msg="未获取到相关日志:{}".format(e))
+            return "未获取到相关日志"
+
+
+class JenkinsOrdersSerializer(serializers.ModelSerializer):
+    jenkins_address = serializers.CharField(source='jenkins.address', read_only=True)
+    service_environment = ServiceEnvironmentSerializer(source='service_env', read_only=True)
+    jenkins_log = JenkinsLogField(read_only=True)
+    order_user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = JenkinsOrders
+        fields = "__all__"
+
+    def validate(self, data):
+        order_user = self.context['request'].user
+        data['order_user'] = order_user
+        return data
+
+    def create(self, validated_data):
+        next_number = get_next_build_number(jks=validated_data['jenkins'])
+        validated_data['jenkins_order_id'] = next_number
+        logger.info("下一个任务id为:{}".format(next_number))
+        instance = JenkinsOrders.objects.create(**validated_data)
+        instance.save()
+        return instance
 
 
 class SubOrderSerializer(serializers.ModelSerializer):
@@ -88,5 +161,6 @@ class ContentTypeSerializer(serializers.ModelSerializer):
 __all__ = [
     'OrdersSerializer',
     'SubOrderSerializer',
-    'ContentTypeSerializer'
+    'ContentTypeSerializer',
+    'JenkinsOrdersSerializer'
 ]

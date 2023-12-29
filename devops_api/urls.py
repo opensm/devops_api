@@ -19,5 +19,6 @@ from django.urls import path, include
 urlpatterns = [
     path('api/auth/', include('apps.account.urls')),
     path('api/config/', include('apps.config.urls')),
+    path('api/jira/', include('apps.jira.urls')),
     path('api/order/', include('apps.order.urls'))
 ]

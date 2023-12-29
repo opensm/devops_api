@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from apps.config.models import *
 from django.utils.translation import gettext_lazy as _
+from apps.jira.models import JiraProjectVersion
+from utils.devops_api_log import logger
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -124,7 +126,7 @@ class ServiceEnvironmentSerializer(serializers.ModelSerializer):
     rw_kubernetes_environment_config = ServiceEnvironmentFields(source='kubernetes_environment_config', read_only=True)
     rw_docker_environment_config = ServiceEnvironmentFields(source='docker_environment_config', read_only=True)
     rw_project = ServiceEnvironmentFields(source='project', read_only=True)
-    production = ProductField()
+    production = ProductField(read_only=True)
 
     class Meta:
         model = ServiceEnvironment
@@ -145,16 +147,45 @@ class KubernetesHelmChartModelSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class EnvironmentVariableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnvironmentVariable
+        fields = "__all__"
+
+
 class ProductsSerializer(serializers.ModelSerializer):
-    rw_service_environment = ServiceEnvironmentSerializer(many=True, source="service_environment")
+    rw_service_environment = ServiceEnvironmentSerializer(many=True, source="service_environment", read_only=True)
     rw_service = serializers.SlugRelatedField(source="service", slug_field='service_name', read_only=True)
 
     class Meta:
         model = Products
         fields = "__all__"
 
+    def validate(self, attrs):
+        images = attrs['images']
+        try:
+            self.get_image_version(images)
+        except Exception as e:
+            raise serializers.ValidationError("没有正确匹配镜像格式，无法找到对应版本号：".format(e))
+        return attrs
+
+    def get_image_version(self, images):
+        import re
+        pattern = re.compile("(.*):(\d{14})-(.*)-([0-9a-z]{6})")
+        result2 = pattern.match(images)
+        version = result2.groups()[2]
+        return version
+
     def create(self, validated_data):
-        service_environment = validated_data.pop('service_environment')
+        version = self.get_image_version(validated_data['images'])
+        service_environment = None
+        try:
+            jira = JiraProjectVersion.objects.get(name=version)
+            validated_data['jira_version'] = jira.id
+        except JiraProjectVersion.DoesNotExist:
+            logger.error("没有关联到 jira版本")
+        if 'service_environment' in validated_data.keys():
+            service_environment = validated_data.pop('service_environment')
         instance = Products.objects.create(**validated_data)
         if service_environment:
             instance.service_environment.set(service_environment)
@@ -162,7 +193,15 @@ class ProductsSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        service_environment = validated_data.pop('service_environment')
+        version = self.get_image_version(validated_data['images'])
+        service_environment = None
+        try:
+            jira = JiraProjectVersion.objects.get(name=version)
+            validated_data['jira_version'] = jira.id
+        except JiraProjectVersion.DoesNotExist:
+            logger.error("没有关联到 jira版本")
+        if 'service_environment' in validated_data.keys():
+            service_environment = validated_data.pop('service_environment')
         for key, value in validated_data.items():
             if not hasattr(instance, key):
                 continue
@@ -191,6 +230,14 @@ class NaCOSSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class JenkinsSerializer(serializers.ModelSerializer):
+    service_environment = ServiceEnvironmentSerializer(read_only=True)
+
+    class Meta:
+        model = Jenkins
+        fields = "__all__"
+
+
 __all__ = [
     'ProjectsSerializer',
     'EnvironmentSerializer',
@@ -207,5 +254,7 @@ __all__ = [
     'ProductsSerializer',
     'DBSerializer',
     'NaCOSSerializer',
-    'NoticeSerializer'
+    'NoticeSerializer',
+    'EnvironmentVariableSerializer',
+    'JenkinsSerializer'
 ]

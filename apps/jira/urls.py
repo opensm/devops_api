@@ -14,12 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path, re_path
-from apps.order.views import *
+from apps.jira.views import *
 
 urlpatterns = [
-    path('content_type', ContentTypeListView.as_view(), name="content_type_list"),
-    path('orders', OrdersManagerView.as_view(), name="orders"),
-    re_path('order/(?P<pk>\d+)$', OrdersUpdateView.as_view(), name="order"),
-    path('jenkins_orders', JenkinsOrdersManagerView.as_view(), name="jenkins_orders"),
-    re_path('jenkins_order/(?P<pk>\d+)$', JenkinsOrdersGetView.as_view(), name="jenkins_order"),
+    path('jiraes', JiraModelManagerView.as_view(), name="jiraes"),
+    re_path('jira/(?P<pk>\d+)$', JiraModelUpdateView.as_view(), name="jira"),
+
+    path('jira_projects', JiraProjectManagerView.as_view(), name="jira_projects"),
+    re_path('jira_project/(?P<pk>\d+)$', JiraProjectUpdateView.as_view(), name="jira_project"),
+
+    path('jira_project_versions', JiraProjectVersionManagerView.as_view(), name="jira_project_versions"),
+    re_path('jira_project_version/(?P<pk>\d+)$', JiraProjectVersionUpdateView.as_view(), name="jira_project_version"),
 ]

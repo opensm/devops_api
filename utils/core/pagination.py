@@ -2,6 +2,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from collections import OrderedDict
 from utils import status
+from utils.devops_api_log import logger
 
 
 # 自定义分页类
@@ -50,6 +51,7 @@ class WritePageNumberPagination(PageNumberPagination):
                 else:
                     params[key] = value
         queryset = queryset.filter(**params)
+        logger.info("请求参数为:{}".format(request.query_params))
         sort_by = request.query_params.get(self.sort_query_param, '+id').strip('+')
         if not hasattr(queryset, sort_by.strip('-')) and sort_by.strip('-') != 'id':
             raise ValueError(

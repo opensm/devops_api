@@ -1,16 +1,18 @@
-from Crypto.Cipher import PKCS1_OAEP, PKCS1_v1_5
+from Crypto.Cipher import PKCS1_v1_5, AES
 from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
 from Crypto import Random
 from utils.exceptions import CryptoDecodeException, CryptoEncodeException
 from devops_api.settings import SECRET_KEY
 from base64 import b64decode
+import base64
+import hashlib
 
 
 class GenerateCrypto:
     salt = None
     private_key = None
     public_key = None
+
     @property
     def generate_secret(self):
         if self.salt:
@@ -36,9 +38,41 @@ class GenerateCrypto:
             raise CryptoDecodeException()
 
 
+class AESCipher(object):
+
+    def __init__(self, key):
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, raw):
+        raw = self._pack_data(raw)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return base64.b64encode(iv + cipher.encrypt(raw))
+
+    def decrypt(self, enc):
+        enc = base64.b64decode(enc)
+        iv = enc[:AES.block_size]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return self._unpack_data(cipher.decrypt(enc[AES.block_size:]))
+
+    @staticmethod
+    def _pack_data(s):
+        return s + ((AES.block_size - len(s) % AES.block_size) * chr(AES.block_size - len(s) % AES.block_size)).encode(
+            'utf-8'
+        )
+
+    @staticmethod
+    def _unpack_data(s):
+        data = s[:-ord(s[len(s) - 1:])]
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        return data
+
+
 generator = GenerateCrypto()
 secret_data = generator.generate_secret
 __all__ = [
     'secret_data',
-    'generator'
+    'generator',
+    'AESCipher'
 ]

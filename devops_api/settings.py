@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'apps.account',
     'apps.config',
-    'apps.order'
+    'apps.order',
+    'apps.jira'
 ]
 
 MIDDLEWARE = [

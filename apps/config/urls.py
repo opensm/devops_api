@@ -21,6 +21,8 @@ urlpatterns = [
     re_path('project/(?P<pk>\d+)$', ProjectUpdateView.as_view(), name="project"),
     path('environments', EnvironmentManagerView.as_view(), name="environments"),
     re_path('environment/(?P<pk>\d+)$', EnvironmentUpdateView.as_view(), name="environment"),
+    path('environment_variables', EnvironmentVariableManagerView.as_view(), name="environment_variables"),
+    re_path('environment_variable/(?P<pk>\d+)$', EnvironmentVariableUpdateView.as_view(), name="environment_variable"),
     path('kubernetes', KubernetesModelManagerView.as_view(), name="kubernetes"),
     re_path('kubernetes_info/(?P<pk>\d+)$', KubernetesModelUpdateView.as_view(), name="kubernetes_info"),
     path('sshkeys', SSHKeyManagerView.as_view(), name="sshkeys"),
@@ -57,4 +59,6 @@ urlpatterns = [
     re_path('nacos/(?P<pk>\d+)$', NaCOSUpdateView.as_view(), name="nacos"),
     path('notices', NoticeManagerView.as_view(), name="notices"),
     re_path('notice/(?P<pk>\d+)$', NoticeUpdateView.as_view(), name="notice"),
+    path('jenkins_all', JenkinsManagerView.as_view(), name="jenkins_all"),
+    re_path('jenkins/(?P<pk>\d+)$', JenkinsUpdateView.as_view(), name="jenkins"),
 ]
