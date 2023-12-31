@@ -7,7 +7,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Auth
 from rest_framework_simplejwt.exceptions import *
 from utils.core.rsa_crypt import generator
 from utils.devops_api_log import logger
-from apps.config.serializers import ProjectsSerializer
 
 
 class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -120,7 +119,6 @@ class AdminSetPasswordSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        print(validated_data['password'].decode('utf8'))
         instance.password = make_password(validated_data['password'].decode('utf8'))
         instance.save()
         return instance
@@ -140,6 +138,46 @@ class GlobalLdapConfigurationPasswordSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class GroupField(serializers.Field):
+
+    def serializers_value(self, value: GlobalLdapGroup):
+        if value.parent_group:
+            self.serializers_value(value.parent_group)
+        else:
+            return value.group_code
+
+    def get_attribute(self, instance):
+        return instance
+
+    def to_representation(self, value):
+        return self.serializers_value(value)
+
+
+class GlobalLdapGroupSerializer(serializers.ModelSerializer):
+    group_string = GroupField(read_only=True)
+
+    class Meta:
+        model = GlobalLdapGroup
+        fields = "__all__"
+
+    def update(self, instance, validated_data):
+        from core import Adopter
+        ad = Adopter(
+            domain=instance.auth.ldap_base_dn,
+            ip=instance.auth.ldap_server,
+            ca_certs_file="",
+            ca_certs_path="",
+            pwd=instance.auth.ldap_binddn,
+            user=instance.auth.ldap_binddn
+        )
+        ad.modify_user(**validated_data)
+
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
 __all__ = [
     "RoleSerializer",
     "UserSerializer",
@@ -148,5 +186,6 @@ __all__ = [
     "PermissionsSerializer",
     "GlobalLdapConfigurationPasswordSerializer",
     "UserResetPasswordSerializer",
-    "AdminSetPasswordSerializer"
+    "AdminSetPasswordSerializer",
+    "GlobalLdapGroupSerializer"
 ]

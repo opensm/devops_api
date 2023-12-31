@@ -48,7 +48,13 @@ class User(AbstractBaseUser):
     create_date = models.DateTimeField(verbose_name='创建日期', auto_now_add=True, null=True)
     update_date = models.DateTimeField(verbose_name='更新日期', auto_now_add=True, null=True)
     last_login = models.DateTimeField(verbose_name='最近登录', auto_now_add=True, null=True)
-    ldap = models.BooleanField(verbose_name="是否为ldap账号", default=True)
+    ldap_group = models.ForeignKey(
+        "GlobalLdapGroup",
+        verbose_name="LDAP组信息",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['mobile', 'is_active', 'is_superuser', 'email']
     objects = UserManager()
@@ -85,10 +91,25 @@ class GlobalLdapConfiguration(models.Model):
         # db_table_comment = 'ldap配置表'
 
 
+class GlobalLdapGroup(models.Model):
+    group_name = models.CharField(verbose_name="组名称", max_length=200, default="org")
+    group_code = models.CharField(verbose_name="组代码", max_length=200, default="org")
+    group_type = models.CharField(verbose_name="组类别", max_length=200, default="org")
+    parent_group = models.ForeignKey(
+        "GlobalLdapGroup",
+        verbose_name="父级组",
+        on_delete=models.CASCADE,
+        default=0,
+        related_name="parent_org"
+    )
+    auth = models.ForeignKey(GlobalLdapConfiguration, verbose_name="对应AD配置", on_delete=models.CASCADE),
+
+
 __all__ = [
     'User',
     "GlobalLdapConfiguration",
     "Role",
     "Permissions",
-    "UserLog"
+    "UserLog",
+    "GlobalLdapGroup"
 ]

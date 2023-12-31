@@ -13,3 +13,4 @@ cerberus
 atlassian-python-api
 nacos-sdk-python
 python-jenkins
+ldap3

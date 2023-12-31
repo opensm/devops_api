@@ -129,6 +129,16 @@ class GlobalLDAPPasswordUpdateView(UpdateAPIView):
     model = GlobalLdapConfiguration
 
 
+class GlobalLDAPGroupManagerView(ListCreateAPIView):
+    serializer_class = GlobalLdapGroupSerializer
+    model = GlobalLdapGroup
+
+
+class GlobalLDAPGroupUpdateView(RetrieveUpdateDestroyAPIView):
+    serializer_class = GlobalLdapGroupSerializer
+    model = GlobalLdapGroup
+
+
 __all__ = [
     'GlobalLDAPPasswordUpdateView',
     "GlobalLDAPUpdateView",
