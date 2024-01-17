@@ -153,5 +153,7 @@ __all__ = [
     "RoleManagerView",
     "RoleUpdateView",
     "GenericKeyView",
-    "CheckUserPasswdView"
+    "CheckUserPasswdView",
+    "GlobalLDAPGroupManagerView",
+    "GlobalLDAPGroupUpdateView"
 ]

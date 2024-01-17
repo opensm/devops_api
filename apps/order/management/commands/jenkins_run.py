@@ -1,3 +1,5 @@
+import time
+
 from django.core.management.base import BaseCommand
 from apps.order.models import JenkinsOrders
 from utils.devops_api_log import logger
@@ -22,8 +24,8 @@ class Command(BaseCommand):
             ):
                 continue
             logger.info("Jenkins status: 开始任务：{}".format(data.jenkins_order_id))
-            if not self.run_jenkins(order=data):
-                continue
+            self.run_jenkins(order=data)
+            time.sleep(5)
 
     def update_task_status(self):
         for data in JenkinsOrders.objects.filter(
@@ -72,7 +74,6 @@ class Command(BaseCommand):
             password='w9vM7BQoED6fg.uheO'
         )
         job_info = jk.get_job_info(name=order.jenkins.name)
-        # logger.info(job_info)
         job_list = [x['number'] for x in job_info['builds']]
         if order.jenkins_order_id in job_list:
             return False
@@ -86,11 +87,6 @@ class Command(BaseCommand):
         :param :
         :return:
         """
-        # jk = Jenkins(
-        #     order.jenkins.address,
-        #     username=order.order_user.username,
-        #     password=order.order_user.password
-        # )
         jk = Jenkins(
             order.jenkins.address,
             username='yaoshaoqiang',
@@ -133,6 +129,29 @@ class Command(BaseCommand):
             order.status = 1
             return True
 
+    def get_task_parameters(self, order: JenkinsOrders):
+        parameters = dict()
+        data = order.service_env
+        env = data.environment.code
+        project = data.kubernetes_environment_config.kubernetes_namespace
+        branch = data.git_branch_or_tag
+        repo_url = data.service.service_git
+        build_params = data.service.service_build_params
+        build_path = data.service.service_build_path
+        service_name = data.service.service_name
+        build_type = data.service.service_type
+        build_bin = data.service.service_build_bin
+        parameters['branch_name'] = branch
+        parameters['repo_url'] = repo_url
+        parameters['build_params'] = build_params
+        parameters['build_path'] = build_path
+        parameters['project_name'] = project
+        parameters['env'] = env
+        parameters['service_name'] = service_name
+        parameters['build_type'] = build_type
+        parameters['build_bin'] = build_bin
+        return parameters
+
     def run_jenkins(self, order: JenkinsOrders):
         """
         :param order:
@@ -148,9 +167,10 @@ class Command(BaseCommand):
             username='yaoshaoqiang',
             password='w9vM7BQoED6fg.uheO'
         )
+        params = self.get_task_parameters(order=order)
         try:
-            jk.build_job(name=order.jenkins.name)
+            jk.build_job(name=order.jenkins.name, parameters=params)
             return True
         except Exception as e:
-            logger.error("任务执行错误：{},{}".format(order.jenkins.name, e))
+            logger.error("任务执行错误：{}:{}".format(order.jenkins.name, e))
             return False

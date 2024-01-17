@@ -33,5 +33,7 @@ urlpatterns = [
     re_path('permission/(?P<pk>\d+)$', PermissionUpdateView.as_view(), name="permission"),
     re_path('ldaps', GlobalLDAPManagerView.as_view(), name="ldaps"),
     re_path('ldap/(?P<pk>\d+)$', GlobalLDAPUpdateView.as_view(), name="ldap"),
-    re_path('ldap_passwd/(?P<pk>\d+)$', GlobalLDAPPasswordUpdateView.as_view(), name="ldap_passwd")
+    re_path('ldap_passwd/(?P<pk>\d+)$', GlobalLDAPPasswordUpdateView.as_view(), name="ldap_passwd"),
+    re_path('ldap_groups', GlobalLDAPGroupManagerView.as_view(), name="ldap_groups"),
+    re_path('ldap_group/(?P<pk>\d+)$', GlobalLDAPGroupUpdateView.as_view(), name="ldap_group")
 ]

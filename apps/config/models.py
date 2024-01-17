@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from utils.core.fields import AESCharField
 from apps.jira.models import JiraProjectVersion
+from django.utils.translation import gettext_lazy as _
 
 
 class Projects(models.Model):
@@ -82,7 +83,15 @@ class Services(models.Model):
     service_ports = models.JSONField(verbose_name="端口列表", default=dict)
     service_config = models.ManyToManyField(ServiceConfig, verbose_name="默认配置文件", default="default", blank=True)
     service_git = models.CharField(verbose_name="代码仓库地址", max_length=200, default="default")
-    service_compile = models.CharField(verbose_name="默认编译命令", max_length=200, default="maven install")
+    service_build_params = models.CharField(verbose_name="默认编译命令", max_length=200, default="maven install")
+    service_type = models.CharField(
+        verbose_name="服务类型",
+        max_length=200,
+        default="single",
+        choices=(("multiple", "复合型"), ("single", "单一型"))
+    )
+    service_build_path = models.CharField(verbose_name="编译目录", max_length=200, default="./")
+    service_build_bin = models.CharField(verbose_name="编译二进制执行命令", max_length=200, default="maven")
     service_healthy_enable = models.BooleanField(verbose_name="监控启用", default=False)
     service_healthy_type = models.CharField(verbose_name="健康检查类型", max_length=200, default="tcp")
     service_readiness = models.JSONField(verbose_name="就绪探针")
@@ -93,6 +102,11 @@ class Services(models.Model):
     service_domain = models.JSONField(verbose_name="配置对外域")
     service_skywalking_enable = models.BooleanField(verbose_name="skywalking启用")
     service_skywalking = models.JSONField(verbose_name="skywalking")
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.service_type == "single" and self.service_build_path:
+            raise ValidationError(_("Service type must be multiple of 'single'"))
 
     class Meta:
         db_table = 't_services'

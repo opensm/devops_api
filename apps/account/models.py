@@ -100,7 +100,7 @@ class GlobalLdapGroup(models.Model):
         verbose_name="父级组",
         on_delete=models.CASCADE,
         default=0,
-        related_name="parent_org"
+        related_name="children"
     )
     auth = models.ForeignKey(GlobalLdapConfiguration, verbose_name="对应AD配置", on_delete=models.CASCADE),
 
