@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 class Projects(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
+    git_http = models.URLField(verbose_name="git url地址", blank=True, null=True)
+    git_token = models.CharField(verbose_name="git token", max_length=255, blank=True, null=True)
     git_server = models.CharField(verbose_name='配置保存地址', max_length=255, blank=True, null=True, default="default")
     git_current_commit = models.CharField(
         verbose_name="当前的commitid", max_length=255, blank=True, null=True, default=""
@@ -78,6 +80,7 @@ class ServiceConfig(models.Model):
 
 
 class Services(models.Model):
+    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
     service_name = models.CharField(max_length=50, verbose_name="服务名称", default="default", unique=True)
     service_ports_enable = models.BooleanField(verbose_name="端口启用", default=False)
     service_ports = models.JSONField(verbose_name="端口列表", default=dict)
@@ -90,7 +93,7 @@ class Services(models.Model):
         default="single",
         choices=(("multiple", "复合型"), ("single", "单一型"))
     )
-    service_build_path = models.CharField(verbose_name="编译目录", max_length=200, default="./")
+    service_build_path = models.CharField(verbose_name="编译目录", max_length=200, default="./", blank=True)
     service_build_bin = models.CharField(verbose_name="编译二进制执行命令", max_length=200, default="maven")
     service_healthy_enable = models.BooleanField(verbose_name="监控启用", default=False)
     service_healthy_type = models.CharField(verbose_name="健康检查类型", max_length=200, default="tcp")
@@ -160,6 +163,7 @@ class EnvironmentVariable(models.Model):
 
 
 class ServiceEnvironment(models.Model):
+    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE, verbose_name="所属环境")
     service = models.ForeignKey(
         Services, on_delete=models.CASCADE, default=0, verbose_name="关联服务", null=False, blank=False
@@ -181,8 +185,11 @@ class ServiceEnvironment(models.Model):
         DockerEnvironmentConfiguration, null=True, blank=True, verbose_name="关联docker配置", on_delete=models.CASCADE
     )
     git_branch_or_tag = models.CharField(max_length=20, default="default", verbose_name="所用分支")
-    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
     auto_deploy = models.BooleanField(null=False, blank=False, default=True, verbose_name="是否自动部署")
+    sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
+    helm_chart_version = models.ForeignKey(
+        'KubernetesHelmChartModel', null=True, blank=True, verbose_name="关联模板", on_delete=models.CASCADE
+    )
 
     class Meta:
         db_table = 't_service_environment'
@@ -214,7 +221,6 @@ class KubernetesHelmChartModel(models.Model):
     workload_type = models.CharField(max_length=30, blank=False, default="deployment")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
-    sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
 
     class Meta:
         db_table = 't_kubernetes_helm'
@@ -239,7 +245,7 @@ class Products(models.Model):
     )
     images = models.CharField(verbose_name="镜像地址", max_length=200, null=False, blank=False, default="images")
     status = models.BooleanField(verbose_name="是否有效", null=False, default=True)
-    install_status = models.BooleanField(verbose_name="是否部署", null=False, default=True)
+    publish = models.BooleanField(verbose_name="是否发布", null=False, default=True)
     service = models.ForeignKey(
         Services, null=False, blank=False, on_delete=models.CASCADE,
         verbose_name="部署服务"
@@ -261,16 +267,15 @@ class DB(models.Model):
         ),
         max_length=10, default="mysql"
     )
-    is_uri = models.BooleanField(verbose_name="uri格式", default=False)
+    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
     environment = models.ForeignKey(
         Environment, null=False, blank=False, on_delete=models.CASCADE, verbose_name="所属环境"
     )
     address = AESCharField(verbose_name="链接地址：IP:Port", max_length=50, default="127.0.0.1")
     username = models.CharField(verbose_name="用户", max_length=10, default="admin", blank=True)
     password = AESCharField(verbose_name="密码", max_length=200, default="admin", blank=True)
-    uri = models.CharField(verbose_name="uri连接地址", max_length=200, default="mongo://127.0.0.1:27017")
+    desc = models.TextField(verbose_name="备注", blank=True)
     sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
-    desc = models.TextField(verbose_name="备注")
 
     class Meta:
         db_table = 't_db'
@@ -286,6 +291,10 @@ class Jenkins(models.Model):
 
 
 class NaCOS(models.Model):
+    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
+    environment = models.ForeignKey(
+        Environment, null=False, blank=False, on_delete=models.CASCADE, verbose_name="所属环境"
+    )
     address = models.CharField(max_length=50, verbose_name="nacos地址", default="default")
     protocol = models.CharField(
         max_length=50, verbose_name="访问协议", default="default", choices=(
@@ -294,9 +303,6 @@ class NaCOS(models.Model):
         ), )
     username = models.CharField(max_length=50, verbose_name="账号", default="default")
     password = AESCharField(max_length=100, verbose_name="密码", default="default")
-    environment = models.ForeignKey(
-        Environment, null=False, blank=False, on_delete=models.CASCADE, verbose_name="所属环境"
-    )
     sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
 
     class Meta:

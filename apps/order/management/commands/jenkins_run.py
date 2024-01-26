@@ -98,6 +98,8 @@ class Command(BaseCommand):
         logger.info("当前的任务ID：{}".format(order.jenkins_order_id))
         if order.jenkins_order_id in job_list:
             order_build_info = jk.get_build_info(name=order.jenkins.name, number=order.jenkins_order_id)
+            data = jk.get_build_env_vars(name=order.jenkins.name, number=order.jenkins_order_id)
+            logger.info("编译环境变量：{}".format(data))
             output = jk.get_build_console_output(name=order.jenkins.name, number=order.jenkins_order_id)
             logger.info("{}：编译信息，{}".format(order.jenkins_order_id, order_build_info))
             order.jenkins_queue_id = order_build_info['queueId']

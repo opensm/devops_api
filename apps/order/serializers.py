@@ -23,7 +23,10 @@ def get_next_build_number(jks: Jenkins):
     model_id = JenkinsOrders.objects.all().aggregate(Max('jenkins_order_id'))
     jk_data = jk.get_job_info(jks.name)
     jk_next_id = int(jk_data['nextBuildNumber'])
-    model_next_id = int(model_id['jenkins_order_id__max']) + 1
+    if model_id['jenkins_order_id__max']:
+        model_next_id = int(model_id['jenkins_order_id__max']) + 1
+    else:
+        return jk_next_id
     if jk_next_id > model_next_id:
         return jk_next_id
     else:
@@ -35,19 +38,14 @@ class JenkinsLogField(serializers.Field):
         return instance
 
     def to_representation(self, value: JenkinsOrders):
-        # jks = Jenkins(
-        #     value.jenkins.address,
-        #     username='yaoshaoqiang',
-        #     password='w9vM7BQoED6fg.uheO'
-        # )
         try:
             logger.info('获取：{}，日志'.format(value.jenkins_order_id))
-            # data = jks.get_build_console_output(
-            #     name=value.jenkins.name,
-            #     number=value.jenkins_order_id
-            # )
-            logger.info("获取到的Jenkins:{}".format(value.output))
-            return "<div>{}</div>".format(value.output.replace('\n', '</br>'))
+            if value.output:
+                data_output = value.output.replace('\n', '</br>')
+            else:
+                data_output = "无日志"
+            logger.info("获取到的Jenkins:{}".format(data_output))
+            return "<div>{}</div>".format(data_output)
         except Exception as e:
             logger.error(msg="未获取到相关日志:{}".format(e))
             return "未获取到相关日志"

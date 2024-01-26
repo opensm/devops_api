@@ -3,6 +3,41 @@ from apps.config.models import *
 from django.utils.translation import gettext_lazy as _
 from apps.jira.models import JiraProjectVersion
 from utils.devops_api_log import logger
+from django.contrib.contenttypes.models import ContentType
+
+
+class EnvironmentFields(serializers.RelatedField):
+    def get_attribute(self, instance):
+        # We pass the object instance onto `to_representation`,
+        # not just the field attribute.
+        return instance
+
+    def to_representation(self, value: Environment):
+        content_object_list = list()
+        content_object_data_dict = dict()
+        for content in ContentType.objects.filter(
+                app_label='config',
+                model__in=['nacos', 'db', 'serviceenvironment']
+        ):
+            content_object_list.append({
+                'value': content.id,
+                'label': "{}-{}".format(
+                    content.app_label,
+                    content.model
+                )
+            })
+            if content.model in ['nacos']:
+                append_args = ['address']
+            elif content.model in ['db']:
+                append_args = ['address', 'db_type']
+            else:
+                append_args = ['service__service_name']
+            content_object_data_dict[content.id] = content.get_all_objects_for_this_type(
+                environment=value
+            ).values(
+                *append_args
+            )
+        return {"content": content_object_list, "data": content_object_data_dict}
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -18,6 +53,8 @@ class NoticeSerializer(serializers.ModelSerializer):
 
 
 class EnvironmentSerializer(serializers.ModelSerializer):
+    env_data = EnvironmentFields(read_only=True)
+
     class Meta:
         model = Environment
         fields = "__all__"
@@ -213,7 +250,8 @@ class ProductsSerializer(serializers.ModelSerializer):
 
 
 class DBSerializer(serializers.ModelSerializer):
-    rw_environment = ServiceEnvironmentFields(source="environment", read_only=True)
+    rw_project = serializers.SlugRelatedField(source="project", slug_field='name', read_only=True)
+    rw_environment = serializers.SlugRelatedField(source="environment", slug_field='environment', read_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -222,7 +260,8 @@ class DBSerializer(serializers.ModelSerializer):
 
 
 class NaCOSSerializer(serializers.ModelSerializer):
-    rw_environment = ServiceEnvironmentFields(source="environment", read_only=True)
+    rw_project = serializers.SlugRelatedField(source="project", slug_field='name', read_only=True)
+    rw_environment = serializers.SlugRelatedField(source="environment", slug_field='environment', read_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:

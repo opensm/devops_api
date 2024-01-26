@@ -1,8 +1,8 @@
 from django.db import models
 from apps.account.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from apps.config.models import Jenkins, ServiceEnvironment
+from apps.config.models import Jenkins, ServiceEnvironment, Environment, Projects
 
 
 class JenkinsOrders(models.Model):
@@ -37,10 +37,6 @@ class JenkinsOrders(models.Model):
 
 class Orders(models.Model):
     id = models.AutoField(primary_key=True)
-    jira_order = models.CharField(
-        verbose_name='jira审核订单', max_length=32, blank=False, null=False,
-        default="default"
-    )
     order_time = models.DateTimeField(verbose_name='类型名称', blank=False, null=False)
     create_time = models.DateTimeField(auto_now_add=True)
     finish_time = models.DateTimeField(auto_created=True, null=True, blank=True)
@@ -53,26 +49,40 @@ class Orders(models.Model):
     )
     notice = models.ManyToManyField(verbose_name="通知类型", to="config.Notice")
     re_orders = models.ForeignKey(verbose_name="回退工单", to="Orders", on_delete=models.CASCADE, null=True, blank=True)
-    desc = models.TextField(verbose_name="发布说明", blank=True)
+    desc = models.TextField(verbose_name="说明", blank=True)
     order_user = models.ForeignKey(User, blank=True, on_delete=models.CASCADE, null=True, verbose_name="工单提交人")
 
     class Meta:
         db_table = 't_orders'
 
 
+class Order(models.Model):
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Projects, null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
+    environment = models.ForeignKey(Environment, on_delete=models.CASCADE, verbose_name="所属环境")
+    status = models.IntegerField(
+        verbose_name="执行状态",
+        choices=(
+            (0, "还未执行"), (1, "执行中"), (2, "执行成功"), (3, "执行失败")
+        ),
+        default=0
+    )
+    desc = models.TextField(verbose_name="发布说明", blank=True)
+    publish = models.BooleanField(default=False, verbose_name="是否发布")
+    create_time = models.DateTimeField(auto_now_add=True)
+    finish_time = models.DateTimeField(auto_created=True, null=True, blank=True)
+    order_user = models.ForeignKey(User, blank=True, on_delete=models.CASCADE, null=True, verbose_name="工单提交人")
+
+    class Meta:
+        db_table = 't_order'
+
+
 class SubOrders(models.Model):
-    order = models.ForeignKey(Orders, on_delete=models.CASCADE, related_name='suborders', null=True, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='suborders', null=True, blank=True)
     status = models.IntegerField(
         verbose_name="执行状态",
         choices=((0, "还未执行"), (1, "执行中"), (2, "执行成功"), (3, "执行失败")),
         default=0
-    )
-    service_env = models.ForeignKey(
-        to='config.ServiceEnvironment',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name="部署服务"
     )
     images = models.ForeignKey(
         to='config.Products',
@@ -83,10 +93,7 @@ class SubOrders(models.Model):
     )
     content_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE)  # 指向ContentType这个模型
     object_id = models.PositiveIntegerField()  # object_id为一个整数，存储了实例id
-    content_object = GenericForeignKey(
-        'content_type',
-        'object_id'
-    )
+    content_object = GenericForeignKey('content_type', 'object_id')
     go_over = models.BooleanField(verbose_name="错误仍执行", default=False)
     params = models.TextField(
         verbose_name="执行参数",
@@ -107,7 +114,7 @@ class SubOrders(models.Model):
 
 
 class OrderLogs(models.Model):
-    order = models.ForeignKey(Orders, on_delete=models.CASCADE, verbose_name="订单", related_name='order_logs')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="订单", related_name='order_logs')
     sub_order = models.ForeignKey(SubOrders, on_delete=models.CASCADE, verbose_name="子订单")
     status = models.BooleanField(
         verbose_name="执行状态",
