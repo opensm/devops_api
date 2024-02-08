@@ -26,6 +26,16 @@ class OrdersUpdateView(RetrieveUpdateDestroyAPIView):
     model = Orders
 
 
+class OrderManagerView(ListCreateAPIView):
+    serializer_class = OrderSerializer
+    model = Order
+
+
+class OrderUpdateView(RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderSerializer
+    model = Order
+
+
 class JenkinsOrdersManagerView(ListCreateAPIView):
     serializer_class = JenkinsOrdersSerializer
     model = JenkinsOrders
@@ -38,6 +48,8 @@ class JenkinsOrdersGetView(RetrieveAPIView):
 
 __all__ = [
     'ContentTypeListView',
+    'OrderManagerView',
+    'OrderUpdateView',
     'OrdersManagerView',
     'OrdersUpdateView',
     'JenkinsOrdersManagerView',

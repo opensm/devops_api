@@ -1,6 +1,7 @@
 from apps.config.models import *
 from apps.config.serializers import *
 from utils.core.views import *
+from django.contrib.contenttypes.models import ContentType
 
 
 class ProjectManagerView(ListCreateAPIView):
@@ -183,6 +184,22 @@ class JenkinsUpdateView(RetrieveUpdateDestroyAPIView):
     model = Jenkins
 
 
+class ContentListView(ListAPIView):
+    serializer_class = ContentTypeSerializer
+    model = ContentType
+
+    # queryset = ContentType.objects.filter(
+    #     app_label='config',
+    #     model__in=['nacos', 'db', 'serviceenvironment']
+    # )
+    def get_queryset(self):
+        queryset = ContentType.objects.filter(
+            app_label='config',
+            model__in=['nacos', 'db', 'serviceenvironment']
+        )
+        return queryset
+
+
 __all__ = [
     'JenkinsManagerView',
     'JenkinsUpdateView',
@@ -219,5 +236,6 @@ __all__ = [
     'NoticeManagerView',
     'NoticeUpdateView',
     'EnvironmentVariableUpdateView',
-    'EnvironmentVariableManagerView'
+    'EnvironmentVariableManagerView',
+    'ContentListView'
 ]

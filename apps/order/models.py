@@ -131,5 +131,6 @@ __all__ = [
     'Orders',
     'SubOrders',
     'OrderLogs',
-    'JenkinsOrders'
+    'JenkinsOrders',
+    'Order'
 ]

@@ -61,4 +61,5 @@ urlpatterns = [
     re_path('notice/(?P<pk>\d+)$', NoticeUpdateView.as_view(), name="notice"),
     path('jenkins_all', JenkinsManagerView.as_view(), name="jenkins_all"),
     re_path('jenkins/(?P<pk>\d+)$', JenkinsUpdateView.as_view(), name="jenkins"),
+    path('contents', ContentListView.as_view(), name="contents")
 ]

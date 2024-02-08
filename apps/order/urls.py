@@ -20,6 +20,8 @@ urlpatterns = [
     path('content_type', ContentTypeListView.as_view(), name="content_type_list"),
     path('orders', OrdersManagerView.as_view(), name="orders"),
     re_path('order/(?P<pk>\d+)$', OrdersUpdateView.as_view(), name="order"),
+    path('ordersubs', OrderManagerView.as_view(), name="order_sub"),
+    re_path('ordersub/(?P<pk>\d+)$', OrderUpdateView.as_view(), name="order_sub"),
     path('jenkins_orders', JenkinsOrdersManagerView.as_view(), name="jenkins_orders"),
     re_path('jenkins_order/(?P<pk>\d+)$', JenkinsOrdersGetView.as_view(), name="jenkins_order"),
 ]

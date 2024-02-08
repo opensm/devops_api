@@ -12,6 +12,7 @@ kubernetes==29.0.0
 cerberus
 atlassian-python-api
 nacos-sdk-python
-python-jenkins
 ldap3
 python-gitlab
+# pulumiverse-harbor
+git+https://github.com/container-registry/harbor-api-client.git

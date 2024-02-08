@@ -6,6 +6,12 @@ from utils.devops_api_log import logger
 from django.contrib.contenttypes.models import ContentType
 
 
+class ContentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContentType
+        fields = ("app_label", "model", "id")
+
+
 class EnvironmentFields(serializers.RelatedField):
     def get_attribute(self, instance):
         # We pass the object instance onto `to_representation`,
@@ -19,31 +25,73 @@ class EnvironmentFields(serializers.RelatedField):
                 app_label='config',
                 model__in=['nacos', 'db', 'serviceenvironment']
         ):
+            if content.model in ['nacos']:
+                append_args = ['address', 'id', 'namespace', 'project__name', 'environment__environment']
+            elif content.model in ['db']:
+                append_args = ['address', 'db_type', 'id', 'project__name', 'environment__environment']
+            else:
+                append_args = ['service__service_name', 'id', 'project__name', 'environment__environment']
+
             content_object_list.append({
                 'value': content.id,
                 'label': "{}-{}".format(
                     content.app_label,
                     content.model
-                )
+                ),
+                'name': content.model
             })
-            if content.model in ['nacos']:
-                append_args = ['address']
-            elif content.model in ['db']:
-                append_args = ['address', 'db_type']
-            else:
-                append_args = ['service__service_name']
-            content_object_data_dict[content.id] = content.get_all_objects_for_this_type(
-                environment=value
+            # content_object_data_dict[content.id] = content.get_all_objects_for_this_type(
+            #     environment=value
+            # ).values(
+            #     *append_args
+            # )
+            extra_data = list()
+            for extra in content.get_all_objects_for_this_type(
+                    environment=value
             ).values(
                 *append_args
-            )
-        return {"content": content_object_list, "data": content_object_data_dict}
+            ):
+                if 'service__service_name' in extra.keys():
+                    extra_data.append({
+                        'label': '项目：{project__name}，环境：{environment__environment}，服务名：{service__service_name}'.format(
+                            **extra
+                        ),
+                        'value': '{id}'.format(**extra)
+                    })
+                elif 'namespace' in extra.keys():
+                    extra_data.append({
+                        'label': '项目：{project__name}，环境：{environment__environment}，命名空间：{namespace}，地址：{address}'.format(
+                            **extra
+                        ),
+                        'value': '{id}'.format(**extra)
+                    })
+                elif 'db_type' in extra.keys():
+                    extra_data.append({
+                        'label': '项目：{project__name}，环境：{environment__environment}，数据库类型：{db_type}，地址：{address}'.format(
+                            **extra
+                        ),
+                        'value': '{id}'.format(**extra)
+                    })
+                else:
+                    logger.warning("未知配置类型")
+            content_object_data_dict[content.id] = extra_data
+
+        return {'content': content_object_list, 'objects': content_object_data_dict}
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
+    harbor_password = serializers.CharField(write_only=True)
+    git_token = serializers.CharField(write_only=True)
+
     class Meta:
         model = Projects
         fields = "__all__"
+
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['harbor_password'] = generator.decrypt_data(data=attrs['harbor_password'])
+        attrs['git_token'] = generator.decrypt_data(data=attrs['git_token'])
+        return attrs
 
 
 class NoticeSerializer(serializers.ModelSerializer):
@@ -53,7 +101,9 @@ class NoticeSerializer(serializers.ModelSerializer):
 
 
 class EnvironmentSerializer(serializers.ModelSerializer):
-    env_data = EnvironmentFields(read_only=True)
+    children = EnvironmentFields(read_only=True)
+    label = serializers.CharField(read_only=True, source="environment")
+    value = serializers.CharField(read_only=True, source="id")
 
     class Meta:
         model = Environment
@@ -75,6 +125,12 @@ class SSHKeySerializer(serializers.ModelSerializer):
     class Meta:
         model = SSHKey
         fields = "__all__"
+
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['ssh_password'] = generator.decrypt_data(data=attrs['ssh_password'])
+        attrs['ssh_public_key'] = generator.decrypt_data(data=attrs['ssh_public_key'])
+        return attrs
 
 
 class ServiceConfigSerializer(serializers.ModelSerializer):
@@ -258,6 +314,11 @@ class DBSerializer(serializers.ModelSerializer):
         model = DB
         fields = "__all__"
 
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['password'] = generator.decrypt_data(data=attrs['password'])
+        return attrs
+
 
 class NaCOSSerializer(serializers.ModelSerializer):
     rw_project = serializers.SlugRelatedField(source="project", slug_field='name', read_only=True)
@@ -267,6 +328,11 @@ class NaCOSSerializer(serializers.ModelSerializer):
     class Meta:
         model = NaCOS
         fields = "__all__"
+
+    def validate(self, attrs):
+        from utils.core.rsa_crypt import generator
+        attrs['password'] = generator.decrypt_data(data=attrs['password'])
+        return attrs
 
 
 class JenkinsSerializer(serializers.ModelSerializer):
@@ -295,5 +361,6 @@ __all__ = [
     'NaCOSSerializer',
     'NoticeSerializer',
     'EnvironmentVariableSerializer',
-    'JenkinsSerializer'
+    'JenkinsSerializer',
+    'ContentTypeSerializer'
 ]

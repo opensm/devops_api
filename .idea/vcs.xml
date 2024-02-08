@@ -3,5 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../devops_ui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../prometheus_alert" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../pulumi-harbor" vcs="Git" />
   </component>
 </project>

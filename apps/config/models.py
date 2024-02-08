@@ -8,9 +8,17 @@ from django.utils.translation import gettext_lazy as _
 class Projects(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False, null=False, default="default")
-    git_http = models.URLField(verbose_name="git url地址", blank=True, null=True)
-    git_token = models.CharField(verbose_name="git token", max_length=255, blank=True, null=True)
+    harbor_domain = models.CharField(
+        verbose_name="harbor域名", max_length=200, blank=False, null=False, default="harbor.newcowin.com"
+    )
+    harbor_username = models.CharField(
+        verbose_name="harbor用户名", max_length=120, blank=False, null=False, default="admin"
+    )
+    harbor_password = AESCharField(
+        verbose_name="harbor密码", max_length=300, blank=False, null=False, default="admin"
+    )
     git_server = models.CharField(verbose_name='配置保存地址', max_length=255, blank=True, null=True, default="default")
+    git_token = AESCharField(verbose_name="git token", max_length=255, blank=True, null=True)
     git_current_commit = models.CharField(
         verbose_name="当前的commitid", max_length=255, blank=True, null=True, default=""
     )
@@ -163,7 +171,10 @@ class EnvironmentVariable(models.Model):
 
 
 class ServiceEnvironment(models.Model):
-    project = models.ForeignKey("Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目")
+    project = models.ForeignKey(
+        to="Projects", null=False, blank=False, on_delete=models.CASCADE, verbose_name="关联项目",
+        related_name="project_service_environment_related"
+    )
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE, verbose_name="所属环境")
     service = models.ForeignKey(
         Services, on_delete=models.CASCADE, default=0, verbose_name="关联服务", null=False, blank=False
@@ -186,10 +197,10 @@ class ServiceEnvironment(models.Model):
     )
     git_branch_or_tag = models.CharField(max_length=20, default="default", verbose_name="所用分支")
     auto_deploy = models.BooleanField(null=False, blank=False, default=True, verbose_name="是否自动部署")
-    sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
     helm_chart_version = models.ForeignKey(
         'KubernetesHelmChartModel', null=True, blank=True, verbose_name="关联模板", on_delete=models.CASCADE
     )
+    sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')
 
     class Meta:
         db_table = 't_service_environment'
@@ -301,6 +312,7 @@ class NaCOS(models.Model):
             ("http", "http"),
             ("grpc", "grpc")
         ), )
+    namespace = models.CharField(verbose_name="命名空间", max_length=200, default="DEFAULT")
     username = models.CharField(max_length=50, verbose_name="账号", default="default")
     password = AESCharField(max_length=100, verbose_name="密码", default="default")
     sub_order = GenericRelation(to='order.SubOrders', object_id_field='pk')

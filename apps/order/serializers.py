@@ -81,6 +81,14 @@ class SubOrderSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderSerializer(serializers.ModelSerializer):
+    suborders = SubOrderSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+
 class OrderLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderLogs
@@ -157,6 +165,7 @@ class ContentTypeSerializer(serializers.ModelSerializer):
 
 
 __all__ = [
+    'OrderSerializer',
     'OrdersSerializer',
     'SubOrderSerializer',
     'ContentTypeSerializer',

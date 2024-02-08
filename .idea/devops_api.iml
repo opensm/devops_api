@@ -7,5 +7,7 @@
     <orderEntry type="jdk" jdkName="Python 3.10 (devops_api)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="devops_ui" />
+    <orderEntry type="module" module-name="pulumi-harbor" />
+    <orderEntry type="module" module-name="prometheus_alert" />
   </component>
 </module>
